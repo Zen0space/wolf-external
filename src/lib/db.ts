@@ -165,34 +165,44 @@ export async function getDownloadCount(fileId: string): Promise<number> {
 // Save email subscriber when downloading a file
 export async function saveEmailSubscriber(email: string, fileId: string): Promise<string> {
   try {
-    const subscriberId = uuidv4();
-    
-    await client.execute({
-      sql: `
-        INSERT INTO email_subscribers (
-          id, email, file_id, ip_address
-        ) VALUES (?, ?, ?, ?)
-      `,
-      args: [
-        subscriberId,
-        email,
-        fileId,
-        'N/A' // In a real app, you would get the IP address from the request
-      ]
-    });
-    
-    // Try to update existing record's download count if the email already exists
-    await client.execute({
+    // First try to update existing record
+    const updateResult = await client.execute({
       sql: `
         UPDATE email_subscribers
-        SET download_count = download_count + 1, 
-            last_download_at = CURRENT_TIMESTAMP
-        WHERE email = ? AND id != ?
+        SET download_count = download_count + 1,
+            last_download_at = CURRENT_TIMESTAMP,
+            file_id = ?
+        WHERE email = ?
       `,
-      args: [email, subscriberId]
+      args: [fileId, email]
     });
     
-    return subscriberId;
+    // If no existing record was updated, insert a new one
+    if (updateResult.rowsAffected === 0) {
+      const subscriberId = uuidv4();
+      await client.execute({
+        sql: `
+          INSERT INTO email_subscribers (
+            id, email, file_id, ip_address
+          ) VALUES (?, ?, ?, ?)
+        `,
+        args: [
+          subscriberId,
+          email,
+          fileId,
+          'N/A' // In a real app, you would get the IP address from the request
+        ]
+      });
+      return subscriberId;
+    }
+    
+    // If we updated an existing record, get and return its ID
+    const result = await client.execute({
+      sql: 'SELECT id FROM email_subscribers WHERE email = ?',
+      args: [email]
+    });
+    
+    return result.rows[0].id as string;
   } catch (error) {
     console.error('Error saving email subscriber:', error);
     throw error;
