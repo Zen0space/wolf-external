@@ -20,13 +20,11 @@ const ThemeToggle: FC = () => {
 
 // Components
 const Navbar: FC = () => {
-  const logoText = "Wolf";
-  
   return (
     <nav className="navbar">
       <div className="nav-logo">
         <span className="logo-icon">🐺</span>
-        <span className="logo-text">{logoText}</span>
+        <span className="logo-text">Wolf</span>
       </div>
       <div className="nav-links">
         <a href="#scripts">Scripts</a>
