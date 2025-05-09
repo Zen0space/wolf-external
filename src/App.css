@@ -61,102 +61,6 @@ body {
   width: 100%;
 }
 
-/* Navbar */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 2rem;
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 100;
-  background-color: #24262f;
-  box-sizing: border-box;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.logo-icon {
-  font-size: 1.8rem;
-  display: inline-block;
-  margin-bottom: 2px;
-}
-
-.logo-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #4A90E2;
-}
-
-.nav-links {
-  display: flex;
-  gap: 2rem;
-  margin: 0 1rem;
-}
-
-.nav-links a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 1rem;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-}
-
-.nav-links a:hover {
-  color: var(--text-primary);
-}
-
-.nav-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.nav-actions .btn-login {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.nav-actions .btn-login:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.nav-actions .btn-primary {
-  background-color: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  font-weight: 600;
-  border: none;
-  border-radius: 5px;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  font-size: 0.9rem;
-}
-
-.nav-actions .btn-primary:hover {
-  background-color: transparent;
-  border: 2px solid var(--btn-primary-bg);
-  color: var(--btn-primary-bg);
-  padding: 6px 14px; /* Adjust for the border */
-}
-
 /* Welcome Section */
 .welcome-section {
   display: flex;
@@ -314,30 +218,12 @@ body {
 
 /* Responsive Styles */
 @media (max-width: 768px) {
-  .navbar {
-    padding: 0.75rem 1rem;
-  }
-  
-  .nav-links {
-    display: none;
-  }
-  
   .welcome-section h1 {
     font-size: 2.5rem;
   }
   
-  .nav-actions .btn-login,
-  .nav-actions .btn-primary {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
-  
   .features-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .logo-text {
-    font-size: 1.3rem;
   }
 }
 
@@ -378,17 +264,6 @@ body {
 }
 
 .welcome-section .cta-buttons .btn-primary:hover {
-  background-color: transparent;
-  border: 2px solid var(--btn-primary-bg);
-  color: var(--btn-primary-bg);
-}
-
-.navbar .nav-actions .btn-primary {
-  background-color: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-}
-
-.navbar .nav-actions .btn-primary:hover {
   background-color: transparent;
   border: 2px solid var(--btn-primary-bg);
   color: var(--btn-primary-bg);

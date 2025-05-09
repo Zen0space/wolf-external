@@ -1,8 +1,9 @@
 import type { FC } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import './App.css'
 import './theme/theme.css'
 import { useTheme } from './theme/ThemeContext'
+import Navbar from './components/Navbar'
 
 // Theme toggle button component
 const ThemeToggle: FC = () => {
@@ -16,28 +17,6 @@ const ThemeToggle: FC = () => {
     >
       {theme === 'light' ? '🌙' : '☀️'}
     </button>
-  );
-};
-
-// Components
-const Navbar: FC = () => {
-  return (
-    <nav className="navbar">
-      <div className="nav-logo">
-        <span className="logo-icon">🐺</span>
-        <span className="logo-text">Wolf</span>
-      </div>
-      <div className="nav-links">
-        <Link to="/scripts">Scripts</Link>
-        <Link to="#windows">Windows</Link>
-        <Link to="#adobe">Adobe</Link>
-        <Link to="#tools">Tools</Link>
-      </div>
-      <div className="nav-actions">
-        <button className="btn-login">Log In</button>
-        <button className="btn-primary">DOWNLOAD</button>
-      </div>
-    </nav>
   );
 };
 
@@ -102,10 +81,16 @@ const FeatureSection: FC = () => {
 }
 
 const AppContent: FC = () => {
+  const navigate = useNavigate();
+  
+  const handleNavbarDownloadClick = () => {
+    navigate('/scripts');
+  };
+  
   return (
     <div className="app">
       <ThemeToggle />
-      <Navbar />
+      <Navbar onDownloadClick={handleNavbarDownloadClick} />
       <main>
         <WelcomeSection />
         <FeatureSection />
