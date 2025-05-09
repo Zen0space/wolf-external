@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import '../theme/theme.css';
 import './Dashboard.css';
 import { useTheme } from '../theme/ThemeContext';
-import { uploadFile, getFiles, getCategories, type FileInfo } from '../lib/db';
+import { uploadFile, getCategories, getFiles, type FileInfo } from '../lib/db';
 
 // Dashboard components
 const Sidebar: FC = () => {
@@ -78,19 +78,35 @@ const FileUploadSection: FC = () => {
   const [category, setCategory] = useState('windows-activation');
   const [message, setMessage] = useState('');
   const [categories, setCategories] = useState<any[]>([]);
+  const [recentFiles, setRecentFiles] = useState<FileInfo[]>([]);
   
-  // Fetch categories on component mount
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    } else if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    } else {
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+  };
+  
+  // Fetch categories and recent files on component mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const cats = await getCategories();
+        const [cats, files] = await Promise.all([
+          getCategories(),
+          getFiles()
+        ]);
         setCategories(cats);
+        setRecentFiles(files.slice(0, 3)); // Show only 3 most recent files
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching data:', error);
       }
     };
     
-    fetchCategories();
+    fetchData();
   }, []);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,7 +177,7 @@ const FileUploadSection: FC = () => {
           {file && (
             <div className="file-info">
               <span className="file-name">{file.name}</span>
-              <span className="file-size">({(file.size / 1024).toFixed(2)} KB)</span>
+              <span className="file-size">({formatFileSize(file.size)})</span>
             </div>
           )}
         </div>
@@ -201,6 +217,23 @@ const FileUploadSection: FC = () => {
         
         {message && <div className="upload-message">{message}</div>}
       </form>
+      
+      {recentFiles.length > 0 && (
+        <div className="recent-uploads">
+          <h3>Recent Uploads</h3>
+          <div className="recent-files-list">
+            {recentFiles.map((file) => (
+              <div key={file.id} className="recent-file-item">
+                <div className="recent-file-name">{file.fileName}</div>
+                <div className="recent-file-meta">
+                  <span className="file-category">{file.category}</span>
+                  <span className="file-size">{formatFileSize(file.size)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

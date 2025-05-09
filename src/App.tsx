@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 import './App.css'
 import './theme/theme.css'
-import { ThemeProvider, useTheme } from './theme/ThemeContext'
+import { useTheme } from './theme/ThemeContext'
 
 // Theme toggle button component
 const ThemeToggle: FC = () => {
