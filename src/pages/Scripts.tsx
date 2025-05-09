@@ -1,8 +1,8 @@
-import type { FC } from 'react';
+import type { FC, CSSProperties } from 'react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import '../theme/theme.css';
-import './Scripts.css';
+
 import { getFiles, getCategories, getDownloadCount, getFile, saveEmailSubscriber, type FileInfo } from '../lib/db';
 
 interface CategoryInfo {
@@ -11,9 +11,321 @@ interface CategoryInfo {
   description: string;
 }
 
+// Modern styled components
+const StyledScripts: Record<string, CSSProperties> = {
+  container: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '7rem 2rem 2rem',
+    minHeight: '100vh',
+    backgroundColor: 'var(--background-main)',
+    color: 'var(--text-primary)',
+  },
+  header: {
+    marginBottom: '2rem',
+    textAlign: 'center',
+  },
+  title: {
+    fontSize: '2.5rem',
+    marginBottom: '0.5rem',
+    color: 'var(--text-primary)',
+    fontWeight: 800,
+  },
+  subtitle: {
+    fontSize: '1.1rem',
+    color: 'var(--text-secondary)',
+    marginBottom: '2rem',
+  },
+  filtersContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    marginBottom: '2rem',
+    flexWrap: 'wrap',
+    maxWidth: '840px',
+    margin: '0 auto 2rem',
+  },
+  searchContainer: {
+    position: 'relative',
+    flex: 1,
+    maxWidth: '500px',
+  },
+  searchInput: {
+    width: '100%',
+    padding: '0.8rem 1rem 0.8rem 2.5rem',
+    borderRadius: '12px',
+    border: '1px solid var(--border-color)',
+    backgroundColor: 'rgba(36, 42, 56, 0.5)',
+    color: 'var(--text-primary)',
+    fontSize: '1rem',
+    transition: 'all 0.2s ease',
+    backdropFilter: 'blur(5px)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: '0.8rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    opacity: 0.6,
+  },
+  categoryFilter: {
+    width: '250px',
+  },
+  categorySelect: {
+    width: '100%',
+    padding: '0.8rem 1rem',
+    borderRadius: '12px',
+    border: '1px solid var(--border-color)',
+    backgroundColor: 'rgba(36, 42, 56, 0.5)',
+    color: 'var(--text-primary)',
+    fontSize: '1rem',
+    appearance: 'none',
+    backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 1rem center',
+    backgroundSize: '1em',
+    transition: 'all 0.2s ease',
+    backdropFilter: 'blur(5px)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  },
+  scriptsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gap: '1.5rem',
+  },
+  loadingSpinner: {
+    textAlign: 'center',
+    padding: '3rem',
+    color: 'var(--text-secondary)',
+  },
+  noScripts: {
+    textAlign: 'center',
+    padding: '3rem',
+    color: 'var(--text-secondary)',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backdropFilter: 'blur(5px)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modal: {
+    backgroundColor: 'var(--background-paper)',
+    borderRadius: '12px',
+    padding: '2rem',
+    width: '90%',
+    maxWidth: '500px',
+    position: 'relative',
+    boxShadow: 'var(--shadow)',
+    animation: 'fadeIn 0.3s ease',
+  },
+  modalClose: {
+    position: 'absolute',
+    top: '1rem',
+    right: '1rem',
+    background: 'none',
+    border: 'none',
+    fontSize: '1.5rem',
+    cursor: 'pointer',
+    color: 'var(--text-secondary)',
+  },
+  modalTitle: {
+    marginTop: 0,
+    marginBottom: '1rem',
+    color: 'var(--text-primary)',
+    fontSize: '1.5rem',
+  },
+  modalText: {
+    color: 'var(--text-secondary)',
+    marginBottom: '1.5rem',
+  },
+  emailInput: {
+    width: '100%',
+    padding: '0.8rem 1rem',
+    borderRadius: '8px',
+    border: '1px solid var(--border-color)',
+    backgroundColor: 'rgba(36, 42, 56, 0.5)',
+    color: 'var(--text-primary)',
+    fontSize: '1rem',
+    marginBottom: '1rem',
+    transition: 'all 0.2s ease',
+  },
+  downloadButton: {
+    width: '100%',
+    backgroundColor: 'var(--btn-primary-bg)',
+    color: 'var(--btn-primary-text)',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '0.8rem 1rem',
+    fontSize: '1rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  privacyNote: {
+    fontSize: '0.8rem',
+    textAlign: 'center',
+    marginTop: '1rem',
+    color: 'var(--text-secondary)',
+  },
+  successNotification: {
+    position: 'fixed',
+    bottom: '2rem',
+    right: '2rem',
+    backgroundColor: 'var(--btn-primary-bg)',
+    color: 'var(--btn-primary-text)',
+    borderRadius: '12px',
+    padding: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+    animation: 'slideIn 0.3s ease-out',
+    zIndex: 1000,
+    maxWidth: '400px',
+  },
+  notificationIcon: {
+    fontSize: '1.5rem',
+    flexShrink: 0,
+  },
+  notificationMessage: {
+    flex: 1,
+    margin: 0,
+    lineHeight: 1.4,
+  },
+  notificationClose: {
+    background: 'none',
+    border: 'none',
+    color: 'var(--btn-primary-text)',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    padding: '0.2rem',
+    marginLeft: 'auto',
+    opacity: 0.8,
+    transition: 'opacity 0.2s',
+  },
+};
+
+// Script card styled components
+const ScriptCardStyles: Record<string, CSSProperties> = {
+  card: {
+    backgroundColor: 'rgba(36, 42, 56, 0.5)',
+    borderRadius: '12px',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+    padding: '1.5rem',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    backdropFilter: 'blur(5px)',
+    border: '1px solid var(--border-color)',
+  },
+  cardHover: {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.2)',
+  },
+  cardTopRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1rem',
+  },
+  cardIcon: {
+    fontSize: '1.5rem',
+    marginRight: '0.5rem',
+  },
+  categoryTag: {
+    fontSize: '0.8rem',
+    backgroundColor: 'rgba(0, 216, 122, 0.2)',
+    color: 'var(--btn-primary-bg)',
+    padding: '0.3rem 0.6rem',
+    borderRadius: '4px',
+    whiteSpace: 'nowrap',
+  },
+  cardTitle: {
+    fontSize: '1.2rem',
+    margin: '0 0 0.8rem 0',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+    textAlign: 'left',
+  },
+  cardDescription: {
+    flex: 1,
+    fontSize: '0.95rem',
+    color: 'var(--text-secondary)',
+    marginBottom: '1.5rem',
+    lineHeight: 1.5,
+    textAlign: 'left',
+  },
+  cardFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  cardInfo: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  cardSize: {
+    fontSize: '0.85rem',
+    color: 'var(--text-secondary)',
+    marginRight: '1rem',
+  },
+  cardDownloads: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.3rem',
+    fontSize: '0.85rem',
+    color: 'var(--text-secondary)',
+    marginRight: '1rem',
+  },
+  downloadIcon: {
+    fontSize: '0.9rem',
+  },
+  actionsContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  downloadButton: {
+    backgroundColor: 'var(--btn-primary-bg)',
+    color: 'var(--btn-primary-text)',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '0.5rem 1rem',
+    fontSize: '0.9rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    marginLeft: 'auto',
+  },
+  downloadButtonHover: {
+    backgroundColor: 'transparent',
+    border: '2px solid var(--btn-primary-bg)',
+    color: 'var(--btn-primary-bg)',
+    padding: '0.3rem 0.8rem',
+  },
+};
+
+// Script Card Component with inline styling
 const ScriptCard: FC<{ file: FileInfo; downloadCount: number; onDownload: () => void }> = ({ 
   file, downloadCount, onDownload 
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
+
   // Format file size for display
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) {
@@ -26,26 +338,46 @@ const ScriptCard: FC<{ file: FileInfo; downloadCount: number; onDownload: () => 
   };
 
   return (
-    <div className="script-card">
-      <div className="script-card-header">
-        <div className="script-card-title">
-          <span className="script-icon">📦</span>
-          <h3>{file.fileName}</h3>
-        </div>
-        <span className="script-category">{file.category}</span>
+    <div 
+      style={{
+        ...ScriptCardStyles.card,
+        ...(isHovered ? ScriptCardStyles.cardHover : {})
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Top row with icon and category */}
+      <div style={ScriptCardStyles.cardTopRow}>
+        <span style={ScriptCardStyles.cardIcon}>📦</span>
+        <span style={ScriptCardStyles.categoryTag}>{file.category}</span>
       </div>
       
-      <p className="script-description">{file.description || 'No description available'}</p>
+      {/* Title row */}
+      <h3 style={ScriptCardStyles.cardTitle}>{file.fileName}</h3>
       
-      <div className="script-card-footer">
-        <div className="script-info">
-          <span className="script-size">{formatFileSize(file.size)}</span>
-          <span className="script-downloads">
-            <span className="download-icon">⬇️</span>
+      {/* Description */}
+      <p style={ScriptCardStyles.cardDescription}>{file.description || 'No description available'}</p>
+      
+      {/* Footer with size, downloads, and button */}
+      <div style={ScriptCardStyles.actionsContainer}>
+        <div style={ScriptCardStyles.cardInfo}>
+          <span style={ScriptCardStyles.cardDownloads}>
+            <span style={ScriptCardStyles.downloadIcon}>⬇️</span>
             {downloadCount} downloads
           </span>
+          <span style={ScriptCardStyles.cardSize}>{formatFileSize(file.size)}</span>
         </div>
-        <button className="btn-download" onClick={onDownload}>Download</button>
+        <button 
+          style={{
+            ...ScriptCardStyles.downloadButton,
+            ...(isButtonHovered ? ScriptCardStyles.downloadButtonHover : {})
+          }}
+          onClick={onDownload}
+          onMouseEnter={() => setIsButtonHovered(true)}
+          onMouseLeave={() => setIsButtonHovered(false)}
+        >
+          Download
+        </button>
       </div>
     </div>
   );
@@ -64,6 +396,7 @@ const Scripts: FC = () => {
   const [email, setEmail] = useState<string>('');
   const [showSuccessNotification, setShowSuccessNotification] = useState<boolean>(false);
   const [downloadedFileName, setDownloadedFileName] = useState<string>('');
+  const [isDownloadButtonHovered, setIsDownloadButtonHovered] = useState(false);
 
   // Fetch scripts and categories on component mount
   useEffect(() => {
@@ -176,28 +509,28 @@ const Scripts: FC = () => {
   };
 
   return (
-    <div className="scripts-container" data-theme={theme}>
-      <div className="scripts-header">
-        <h1>Available Scripts</h1>
-        <p className="scripts-subtitle">Download useful scripts and tools for your system</p>
+    <div style={StyledScripts.container} data-theme={theme}>
+      <div style={StyledScripts.header}>
+        <h1 style={StyledScripts.title}>Available Scripts</h1>
+        <p style={StyledScripts.subtitle}>Download useful scripts and tools for your system</p>
         
-        <div className="scripts-filters">
-          <div className="search-container">
+        <div style={StyledScripts.filtersContainer}>
+          <div style={StyledScripts.searchContainer}>
             <input
               type="text"
               placeholder="Search scripts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
+              style={StyledScripts.searchInput}
             />
-            <span className="search-icon">🔍</span>
+            <span style={StyledScripts.searchIcon}>🔍</span>
           </div>
           
-          <div className="category-filter">
+          <div style={StyledScripts.categoryFilter}>
             <select 
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="category-select"
+              style={StyledScripts.categorySelect}
             >
               <option value="all">All Categories</option>
               {categories.map(category => (
@@ -208,11 +541,11 @@ const Scripts: FC = () => {
         </div>
       </div>
       
-      <div className="scripts-content">
+      <div>
         {loading ? (
-          <div className="loading-spinner">Loading scripts...</div>
+          <div style={StyledScripts.loadingSpinner}>Loading scripts...</div>
         ) : filteredScripts.length > 0 ? (
-          <div className="scripts-grid">
+          <div style={StyledScripts.scriptsGrid}>
             {filteredScripts.map(script => (
               <ScriptCard
                 key={script.id}
@@ -223,7 +556,7 @@ const Scripts: FC = () => {
             ))}
           </div>
         ) : (
-          <div className="no-scripts">
+          <div style={StyledScripts.noScripts}>
             <p>No scripts found matching your criteria.</p>
           </div>
         )}
@@ -231,11 +564,16 @@ const Scripts: FC = () => {
       
       {/* Email Modal */}
       {showEmailModal && (
-        <div className="email-modal-overlay">
-          <div className="email-modal">
-            <button className="modal-close" onClick={() => setShowEmailModal(false)}>×</button>
-            <h2>Subscribe to Download</h2>
-            <p>Enter your email to download this script and receive updates about new tools.</p>
+        <div style={StyledScripts.modalOverlay}>
+          <div style={StyledScripts.modal}>
+            <button 
+              style={StyledScripts.modalClose} 
+              onClick={() => setShowEmailModal(false)}
+            >
+              ×
+            </button>
+            <h2 style={StyledScripts.modalTitle}>Subscribe to Download</h2>
+            <p style={StyledScripts.modalText}>Enter your email to download this script and receive updates about new tools.</p>
             
             <form onSubmit={handleEmailSubmit}>
               <input
@@ -244,28 +582,34 @@ const Scripts: FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="email-input"
+                style={StyledScripts.emailInput}
                 disabled={loading}
               />
-              <button type="submit" className="btn-primary" disabled={loading}>
+              <button 
+                type="submit" 
+                style={StyledScripts.downloadButton}
+                disabled={loading}
+                onMouseEnter={() => setIsDownloadButtonHovered(true)}
+                onMouseLeave={() => setIsDownloadButtonHovered(false)}
+              >
                 {loading ? 'Processing...' : 'Download Now'}
               </button>
             </form>
             
-            <p className="privacy-note">We respect your privacy and will never share your email.</p>
+            <p style={StyledScripts.privacyNote}>We respect your privacy and will never share your email.</p>
           </div>
         </div>
       )}
       
       {/* Success Notification */}
       {showSuccessNotification && (
-        <div className="success-notification">
-          <div className="success-icon">✅</div>
-          <div className="success-message">
+        <div style={StyledScripts.successNotification}>
+          <div style={StyledScripts.notificationIcon}>✅</div>
+          <div style={StyledScripts.notificationMessage}>
             <p><strong>{downloadedFileName}</strong> has been downloaded successfully!</p>
           </div>
           <button 
-            className="notification-close" 
+            style={StyledScripts.notificationClose}
             onClick={() => setShowSuccessNotification(false)}
           >
             ×
