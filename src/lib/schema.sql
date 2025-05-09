@@ -36,6 +36,19 @@ CREATE TABLE IF NOT EXISTS downloads (
   FOREIGN KEY (file_id) REFERENCES files(id)
 );
 
+-- Create email subscribers table (for collecting user emails when downloading)
+CREATE TABLE IF NOT EXISTS email_subscribers (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  download_count INTEGER DEFAULT 1,
+  last_download_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  ip_address TEXT,
+  file_id TEXT,
+  FOREIGN KEY (file_id) REFERENCES files(id)
+);
+
 -- Index for faster queries
 CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
-CREATE INDEX IF NOT EXISTS idx_downloads_file_id ON downloads(file_id); 
+CREATE INDEX IF NOT EXISTS idx_downloads_file_id ON downloads(file_id);
+CREATE INDEX IF NOT EXISTS idx_email_subscribers_email ON email_subscribers(email); 

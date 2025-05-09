@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.tsx'
 import Dashboard from './pages/Dashboard.tsx'
+import Scripts from './pages/Scripts.tsx'
 import { ThemeProvider } from './theme/ThemeContext'
 import './index.css'
 import './theme/theme.css'
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/scripts" element={<Scripts />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

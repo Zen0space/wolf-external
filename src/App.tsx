@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import './App.css'
 import './theme/theme.css'
 import { useTheme } from './theme/ThemeContext'
@@ -27,10 +28,10 @@ const Navbar: FC = () => {
         <span className="logo-text">Wolf</span>
       </div>
       <div className="nav-links">
-        <a href="#scripts">Scripts</a>
-        <a href="#windows">Windows</a>
-        <a href="#adobe">Adobe</a>
-        <a href="#tools">Tools</a>
+        <Link to="/scripts">Scripts</Link>
+        <Link to="#windows">Windows</Link>
+        <Link to="#adobe">Adobe</Link>
+        <Link to="#tools">Tools</Link>
       </div>
       <div className="nav-actions">
         <button className="btn-login">Log In</button>
@@ -41,13 +42,19 @@ const Navbar: FC = () => {
 };
 
 const WelcomeSection: FC = () => {
+  const navigate = useNavigate();
+  
+  const handleDownloadClick = () => {
+    navigate('/scripts');
+  };
+  
   return (
     <section className="welcome-section">
       <div className="welcome-content">
         <h1>Powerful Scripts & Tools<br />For Every Need</h1>
         <p className="subtitle">Streamline your system with automated solutions</p>
         <div className="cta-buttons">
-          <button className="btn-primary">Download Scripts</button>
+          <button className="btn-primary" onClick={handleDownloadClick}>Download Scripts</button>
           <button className="btn-secondary">View Documentation</button>
         </div>
       </div>
