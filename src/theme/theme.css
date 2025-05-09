@@ -1,0 +1,128 @@
+:root {
+  /* Light theme variables */
+  --primary-color: #2A3B4C;
+  --secondary-color: #4A5568;
+  --accent-color: #4A90E2;
+  --background-main: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
+  --background-paper: #F8FAFC;
+  --text-primary: #2A3B4C;
+  --text-secondary: #4A5568;
+  --text-accent: #4A90E2;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --btn-primary-bg: #00D87A;
+  --btn-primary-text: #121212;
+  --btn-secondary-bg: rgba(255, 255, 255, 0.1);
+  --btn-secondary-text: #FFFFFF;
+}
+
+[data-theme='dark'] {
+  --primary-color: #FFFFFF;
+  --secondary-color: #E2E8F0;
+  --accent-color: #00D87A;
+  --background-main: linear-gradient(180deg, #1A1F2B 0%, #151921 100%);
+  --background-paper: #242A38;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0;
+  --text-accent: #00D87A;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --btn-primary-bg: #00D87A;
+  --btn-primary-text: #121212;
+  --btn-secondary-bg: rgba(255, 255, 255, 0.1);
+  --btn-secondary-text: #FFFFFF;
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: var(--background-main);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s ease;
+  overflow-x: hidden;
+  background-image: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+}
+
+[data-theme='dark'] body {
+  background-image: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+}
+
+/* Common component styles */
+.card {
+  background-color: var(--background-paper);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-accent {
+  color: var(--text-accent);
+}
+
+.bg-primary {
+  background-color: var(--background-main);
+}
+
+.bg-paper {
+  background-color: var(--background-paper);
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font-weight: 600;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 216, 122, 0.3);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.btn-login {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+
+.btn-login:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+} 
