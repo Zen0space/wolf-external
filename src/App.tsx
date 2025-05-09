@@ -35,7 +35,7 @@ const Navbar: FC = () => {
       </div>
       <div className="nav-actions">
         <button className="btn-login">Log In</button>
-        <button className="btn-primary">Download Now</button>
+        <button className="btn-primary">DOWNLOAD</button>
       </div>
     </nav>
   );
@@ -54,7 +54,7 @@ const WelcomeSection: FC = () => {
         <h1>Powerful Scripts & Tools<br />For Every Need</h1>
         <p className="subtitle">Streamline your system with automated solutions</p>
         <div className="cta-buttons">
-          <button className="btn-primary" onClick={handleDownloadClick}>Download Scripts</button>
+          <button className="btn-primary" onClick={handleDownloadClick}>DOWNLOAD SCRIPTS</button>
           <button className="btn-secondary">View Documentation</button>
         </div>
       </div>

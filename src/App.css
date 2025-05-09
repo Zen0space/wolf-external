@@ -122,6 +122,41 @@ body {
   flex-shrink: 0;
 }
 
+.nav-actions .btn-login {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.nav-actions .btn-login:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-actions .btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font-weight: 600;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.nav-actions .btn-primary:hover {
+  background-color: transparent;
+  border: 2px solid var(--btn-primary-bg);
+  color: var(--btn-primary-bg);
+  padding: 6px 14px; /* Adjust for the border */
+}
+
 /* Welcome Section */
 .welcome-section {
   display: flex;
@@ -160,11 +195,53 @@ body {
   margin-bottom: 3rem;
 }
 
+/* CTA Buttons */
 .cta-buttons {
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-top: 2rem;
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-buttons .btn-primary,
+.cta-buttons .btn-secondary {
+  width: 220px;
+  border-radius: 5px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cta-buttons .btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 216, 122, 0.3);
+}
+
+.cta-buttons .btn-primary:hover {
+  background-color: transparent;
+  border: 2px solid var(--btn-primary-bg);
+  color: var(--btn-primary-bg);
+  transform: translateY(-2px);
+  padding: 10px 14px; /* Adjust for the border */
+}
+
+.cta-buttons .btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cta-buttons .btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
 }
 
 /* Feature Section */
@@ -249,17 +326,14 @@ body {
     font-size: 2.5rem;
   }
   
+  .nav-actions .btn-login,
+  .nav-actions .btn-primary {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  
   .features-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .nav-actions .btn-login {
-    display: none;
-  }
-  
-  .nav-actions .btn-primary {
-    font-size: 0.9rem;
-    padding: 8px 16px;
   }
   
   .logo-text {
@@ -269,18 +343,53 @@ body {
 
 @media (max-width: 480px) {
   .welcome-content h1 {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
   
   .cta-buttons {
     flex-direction: column;
-    gap: 1rem;
     width: 100%;
-    max-width: 250px;
+    gap: 1rem;
+    max-width: 220px; /* Match button width on mobile */
     margin: 2rem auto 0;
   }
   
-  .cta-buttons button {
+  .cta-buttons .btn-primary,
+  .cta-buttons .btn-secondary {
     width: 100%;
   }
+  
+  .cta-buttons .btn-primary:hover {
+    padding: 10px 14px; /* Adjust for border on hover */
+  }
+  
+  .feature-card {
+    padding: 1.5rem;
+  }
+}
+
+/* Override theme.css styles with more specific selectors */
+.welcome-section .cta-buttons .btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  width: 220px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.welcome-section .cta-buttons .btn-primary:hover {
+  background-color: transparent;
+  border: 2px solid var(--btn-primary-bg);
+  color: var(--btn-primary-bg);
+}
+
+.navbar .nav-actions .btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.navbar .nav-actions .btn-primary:hover {
+  background-color: transparent;
+  border: 2px solid var(--btn-primary-bg);
+  color: var(--btn-primary-bg);
 }
