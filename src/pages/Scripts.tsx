@@ -162,13 +162,15 @@ const StyledScripts: Record<string, CSSProperties> = {
     width: '100%',
     backgroundColor: 'var(--btn-primary-bg)',
     color: 'var(--btn-primary-text)',
-    border: 'none',
-    borderRadius: '8px',
-    padding: '0.8rem 1rem',
-    fontSize: '1rem',
+    border: '2px solid var(--btn-primary-bg)',
+    borderRadius: '6px',
+    padding: '0.5rem 1rem',
+    fontSize: '0.9rem',
     fontWeight: 500,
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+    marginLeft: 'auto',
+    boxSizing: 'border-box',
   },
   privacyNote: {
     fontSize: '0.8rem',
@@ -302,7 +304,7 @@ const ScriptCardStyles: Record<string, CSSProperties> = {
   downloadButton: {
     backgroundColor: 'var(--btn-primary-bg)',
     color: 'var(--btn-primary-text)',
-    border: 'none',
+    border: '2px solid var(--btn-primary-bg)',
     borderRadius: '6px',
     padding: '0.5rem 1rem',
     fontSize: '0.9rem',
@@ -310,12 +312,12 @@ const ScriptCardStyles: Record<string, CSSProperties> = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     marginLeft: 'auto',
+    boxSizing: 'border-box',
   },
   downloadButtonHover: {
     backgroundColor: 'transparent',
     border: '2px solid var(--btn-primary-bg)',
     color: 'var(--btn-primary-bg)',
-    padding: '0.3rem 0.8rem',
   },
 };
 
@@ -396,7 +398,6 @@ const Scripts: FC = () => {
   const [email, setEmail] = useState<string>('');
   const [showSuccessNotification, setShowSuccessNotification] = useState<boolean>(false);
   const [downloadedFileName, setDownloadedFileName] = useState<string>('');
-  const [isDownloadButtonHovered, setIsDownloadButtonHovered] = useState(false);
 
   // Fetch scripts and categories on component mount
   useEffect(() => {
@@ -589,8 +590,6 @@ const Scripts: FC = () => {
                 type="submit" 
                 style={StyledScripts.downloadButton}
                 disabled={loading}
-                onMouseEnter={() => setIsDownloadButtonHovered(true)}
-                onMouseLeave={() => setIsDownloadButtonHovered(false)}
               >
                 {loading ? 'Processing...' : 'Download Now'}
               </button>
