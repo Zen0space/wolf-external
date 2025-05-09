@@ -162,6 +162,43 @@ export async function getDownloadCount(fileId: string): Promise<number> {
   }
 }
 
+// Save email subscriber when downloading a file
+export async function saveEmailSubscriber(email: string, fileId: string): Promise<string> {
+  try {
+    const subscriberId = uuidv4();
+    
+    await client.execute({
+      sql: `
+        INSERT INTO email_subscribers (
+          id, email, file_id, ip_address
+        ) VALUES (?, ?, ?, ?)
+      `,
+      args: [
+        subscriberId,
+        email,
+        fileId,
+        'N/A' // In a real app, you would get the IP address from the request
+      ]
+    });
+    
+    // Try to update existing record's download count if the email already exists
+    await client.execute({
+      sql: `
+        UPDATE email_subscribers
+        SET download_count = download_count + 1, 
+            last_download_at = CURRENT_TIMESTAMP
+        WHERE email = ? AND id != ?
+      `,
+      args: [email, subscriberId]
+    });
+    
+    return subscriberId;
+  } catch (error) {
+    console.error('Error saving email subscriber:', error);
+    throw error;
+  }
+}
+
 // Helper function to convert ArrayBuffer to Base64
 function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
   if (buffer instanceof Uint8Array) {

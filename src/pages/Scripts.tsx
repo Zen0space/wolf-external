@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import '../theme/theme.css';
 import './Scripts.css';
-import { getFiles, getCategories, getDownloadCount, type FileInfo } from '../lib/db';
+import { getFiles, getCategories, getDownloadCount, getFile, saveEmailSubscriber, type FileInfo } from '../lib/db';
 
 interface CategoryInfo {
   id: string;
@@ -62,6 +62,8 @@ const Scripts: FC = () => {
   const [showEmailModal, setShowEmailModal] = useState<boolean>(false);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [email, setEmail] = useState<string>('');
+  const [showSuccessNotification, setShowSuccessNotification] = useState<boolean>(false);
+  const [downloadedFileName, setDownloadedFileName] = useState<string>('');
 
   // Fetch scripts and categories on component mount
   useEffect(() => {
@@ -118,13 +120,32 @@ const Scripts: FC = () => {
     if (!email || !selectedFileId) return;
     
     try {
-      // Here you would typically handle the email submission and download
-      // For now, let's just simulate a download
-      const fileToDownload = scripts.find(script => script.id === selectedFileId);
-      if (fileToDownload) {
-        // In a real app, you'd trigger the actual file download here
-        // and save the email to your database
-        console.log(`Downloading ${fileToDownload.fileName} for email: ${email}`);
+      // Show loading state
+      setLoading(true);
+      
+      // Save the email subscriber to the database
+      await saveEmailSubscriber(email, selectedFileId);
+      
+      // Get the file with content from the database
+      const fileData = await getFile(selectedFileId);
+      
+      if (fileData) {
+        // Create a blob from the file content
+        const blob = new Blob([fileData.content], { type: 'application/zip' });
+        
+        // Create a download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileData.fileName;
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        
+        // Clean up
+        URL.revokeObjectURL(url);
+        document.body.removeChild(link);
         
         // Close the modal and reset state
         setShowEmailModal(false);
@@ -136,9 +157,21 @@ const Scripts: FC = () => {
           ...prev,
           [selectedFileId]: (prev[selectedFileId] || 0) + 1
         }));
+        
+        // Show success notification
+        setDownloadedFileName(fileData.fileName);
+        setShowSuccessNotification(true);
+        
+        // Hide notification after 5 seconds
+        setTimeout(() => {
+          setShowSuccessNotification(false);
+        }, 5000);
       }
     } catch (error) {
       console.error('Error processing download:', error);
+      alert('There was an error downloading the file. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -212,12 +245,31 @@ const Scripts: FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="email-input"
+                disabled={loading}
               />
-              <button type="submit" className="btn-primary">Download Now</button>
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? 'Processing...' : 'Download Now'}
+              </button>
             </form>
             
             <p className="privacy-note">We respect your privacy and will never share your email.</p>
           </div>
+        </div>
+      )}
+      
+      {/* Success Notification */}
+      {showSuccessNotification && (
+        <div className="success-notification">
+          <div className="success-icon">✅</div>
+          <div className="success-message">
+            <p><strong>{downloadedFileName}</strong> has been downloaded successfully!</p>
+          </div>
+          <button 
+            className="notification-close" 
+            onClick={() => setShowSuccessNotification(false)}
+          >
+            ×
+          </button>
         </div>
       )}
     </div>
