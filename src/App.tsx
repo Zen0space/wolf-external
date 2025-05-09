@@ -109,9 +109,7 @@ const AppContent: FC = () => {
 
 const App: FC = () => {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <AppContent />
   )
 }
 
