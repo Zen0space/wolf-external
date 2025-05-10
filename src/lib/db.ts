@@ -8,85 +8,66 @@ const client = createClient({
   authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN as string,
 });
 
-// Malaysia timezone helper functions
-// Malaysia is UTC+8
-const MALAYSIA_TIMEZONE_OFFSET = '+08:00';
-const MALAYSIA_HOURS_OFFSET = 8;
+// Timezone configuration - using ISO 8601 with Malaysia timezone (+08:00)
+
+// For debugging time calculations
+export function getLocalAndMalaysiaTime(): { local: string, malaysia: string } {
+  const now = new Date();
+  const malaysiaTime = new Date(now.getTime());
+  return {
+    local: now.toISOString(),
+    malaysia: malaysiaTime.toISOString().replace('Z', '+08:00')
+  };
+}
 
 // Get current time in Malaysia timezone as ISO 8601 string
 export function getMalaysiaTimeISO(): string {
-  // Get current time
   const now = new Date();
-  
-  // Add 8 hours to convert to Malaysia time
-  const malaysiaTime = new Date(now.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
-  
-  // Format to ISO string
-  const year = malaysiaTime.getFullYear();
-  const month = (malaysiaTime.getMonth() + 1).toString().padStart(2, '0');
-  const day = malaysiaTime.getDate().toString().padStart(2, '0');
-  const hour = malaysiaTime.getHours().toString().padStart(2, '0');
-  const minute = malaysiaTime.getMinutes().toString().padStart(2, '0');
-  const second = malaysiaTime.getSeconds().toString().padStart(2, '0');
-  
-  // Create ISO 8601 string with +08:00 timezone
-  const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}${MALAYSIA_TIMEZONE_OFFSET}`;
-  
-  return isoString;
+  return now.toISOString().replace('Z', '+08:00');
 }
 
-// Convert any date to Malaysia timezone ISO 8601 string
+// Convert any date to Malaysia timezone ISO string
 export function toMalaysiaTimeISO(date: Date): string {
-  // Add 8 hours to convert to Malaysia time
-  const malaysiaTime = new Date(date.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
-  
-  // Format to ISO string
-  const year = malaysiaTime.getFullYear();
-  const month = (malaysiaTime.getMonth() + 1).toString().padStart(2, '0');
-  const day = malaysiaTime.getDate().toString().padStart(2, '0');
-  const hour = malaysiaTime.getHours().toString().padStart(2, '0');
-  const minute = malaysiaTime.getMinutes().toString().padStart(2, '0');
-  const second = malaysiaTime.getSeconds().toString().padStart(2, '0');
-  
-  // Create ISO 8601 string with +08:00 timezone
-  const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}${MALAYSIA_TIMEZONE_OFFSET}`;
-  
-  return isoString;
+  return date.toISOString().replace('Z', '+08:00');
 }
 
-// Format a date for Malaysia time display (Today, Yesterday, or specific date)
+// Format a date for display in Malaysia time
 export function formatMalaysiaTime(timestamp: Date | string): { formattedTime: string, isoTimestamp: string } {
   // Convert the timestamp to a Date object
-  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
+  let date: Date;
   
-  // Add 8 hours to convert from GMT+0 to GMT+8 (Malaysia time)
-  const malaysiaDate = new Date(date.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
+  if (typeof timestamp === 'string') {
+    // Remove timezone offset if present and create date
+    const cleanTimestamp = timestamp.replace(/([+-]\d{2}:?\d{2}|Z)$/, '');
+    date = new Date(cleanTimestamp);
+  } else {
+    date = new Date(timestamp);
+  }
   
-  // Format ISO timestamp
-  const isoTimestamp = malaysiaDate.toISOString().replace('Z', '+08:00');
+  // Create ISO timestamp with Malaysia offset
+  const isoTimestamp = date.toISOString().replace('Z', '+08:00');
   
-  // Get current date in Malaysia time for comparison
+  // Get current date for comparison
   const now = new Date();
-  const nowMalaysia = new Date(now.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
   
-  // For day comparison, use UTC methods to avoid timezone issues
+  // For day comparison
   const isToday = 
-    malaysiaDate.getUTCFullYear() === nowMalaysia.getUTCFullYear() &&
-    malaysiaDate.getUTCMonth() === nowMalaysia.getUTCMonth() &&
-    malaysiaDate.getUTCDate() === nowMalaysia.getUTCDate();
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
   
-  // Check if it's yesterday by comparing the date value (day before)
-  const yesterdayMalaysia = new Date(nowMalaysia);
-  yesterdayMalaysia.setUTCDate(nowMalaysia.getUTCDate() - 1);
+  // Check if it's yesterday
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
   
   const isYesterday = 
-    malaysiaDate.getUTCFullYear() === yesterdayMalaysia.getUTCFullYear() &&
-    malaysiaDate.getUTCMonth() === yesterdayMalaysia.getUTCMonth() &&
-    malaysiaDate.getUTCDate() === yesterdayMalaysia.getUTCDate();
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate();
   
   // Format the time part (HH:MM)
-  const hours = malaysiaDate.getHours();
-  const minutes = malaysiaDate.getMinutes();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
   
   // Determine if AM or PM
   const period = hours >= 12 ? 'PM' : 'AM';
@@ -97,22 +78,18 @@ export function formatMalaysiaTime(timestamp: Date | string): { formattedTime: s
   // Format with leading zeros
   const formattedMinutes = minutes.toString().padStart(2, '0');
   
-  // Format the time string
-  const timeString = `${hours12}:${formattedMinutes} ${period}`;
+  // Format day/month/year for display if needed
+  const displayDay = date.getDate().toString().padStart(2, '0');
+  const displayMonth = date.toLocaleString('en-US', { month: 'short' });
+  const displayYear = date.getFullYear();
   
   let formattedTime;
   if (isToday) {
-    // Today
-    formattedTime = `Today, ${timeString}`;
+    formattedTime = `Today, ${hours12}:${formattedMinutes} ${period} (MYT)`;
   } else if (isYesterday) {
-    // Yesterday
-    formattedTime = `Yesterday, ${timeString}`;
+    formattedTime = `Yesterday, ${hours12}:${formattedMinutes} ${period} (MYT)`;
   } else {
-    // Format date as DD MMM YYYY
-    const day = malaysiaDate.getDate().toString().padStart(2, '0');
-    const month = malaysiaDate.toLocaleString('en-US', { month: 'short' });
-    const year = malaysiaDate.getFullYear();
-    formattedTime = `${day} ${month} ${year}, ${timeString}`;
+    formattedTime = `${displayDay} ${displayMonth} ${displayYear}, ${hours12}:${formattedMinutes} ${period} (MYT)`;
   }
   
   return {
@@ -180,8 +157,8 @@ export async function uploadFile(file: FileUpload): Promise<string> {
     // Convert Uint8Array or ArrayBuffer to Base64 for storage
     const contentBase64 = arrayBufferToBase64(file.content);
     
-    // Use explicit Malaysia time for created_at and updated_at
-    const malaysiaTime = getMalaysiaTimeISO();
+    // Use local time for created_at and updated_at
+    const localTime = getMalaysiaTimeISO();
     
     await client.execute({
       sql: `
@@ -197,8 +174,8 @@ export async function uploadFile(file: FileUpload): Promise<string> {
         file.category,
         file.size,
         contentBase64,
-        malaysiaTime,
-        malaysiaTime
+        localTime,
+        localTime
       ]
     });
     
@@ -266,12 +243,12 @@ export async function getFile(id: string) {
     
     const file = result.rows[0];
     
-    // Track download using explicit Malaysia time
-    const malaysiaTime = getMalaysiaTimeISO();
+    // Track download using local time
+    const localTime = getMalaysiaTimeISO();
     
     await client.execute({
       sql: 'INSERT INTO downloads (id, file_id, downloaded_at) VALUES (?, ?, ?)',
-      args: [uuidv4(), id, malaysiaTime]
+      args: [uuidv4(), id, localTime]
     });
     
     const createdAt = file.created_at as string;
@@ -312,19 +289,19 @@ export async function getDownloadCount(fileId: string): Promise<number> {
 // Save email subscriber when downloading a file
 export async function saveEmailSubscriber(email: string, fileId: string): Promise<string> {
   try {
-    // Get current Malaysia time as ISO string
-    const malaysiaTime = getMalaysiaTimeISO();
+    // Get current time as ISO string
+    const localTime = getMalaysiaTimeISO();
     
     // First try to update existing record
     const updateResult = await client.execute({
       sql: `
         UPDATE email_subscribers
         SET download_count = download_count + 1,
-            last_download_at = ?, -- Use Malaysia time explicitly
+            last_download_at = ?, -- Use local time
             file_id = ?
         WHERE email = ?
       `,
-      args: [malaysiaTime, fileId, email]
+      args: [localTime, fileId, email]
     });
     
     // If no existing record was updated, insert a new one
@@ -342,8 +319,8 @@ export async function saveEmailSubscriber(email: string, fileId: string): Promis
           email,
           fileId,
           'N/A', // In a real app, you would get the IP address from the request
-          malaysiaTime,
-          malaysiaTime
+          localTime,
+          localTime
         ]
       });
       return subscriberId;
@@ -401,8 +378,8 @@ export async function createAdminUser(user: AdminUser): Promise<string> {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(user.password!, salt);
     
-    // Use Malaysia time
-    const malaysiaTime = getMalaysiaTimeISO();
+    // Use local time
+    const localTime = getMalaysiaTimeISO();
     
     await client.execute({
       sql: `
@@ -417,7 +394,7 @@ export async function createAdminUser(user: AdminUser): Promise<string> {
         passwordHash,
         user.isActive !== undefined ? user.isActive : true,
         user.role || 'admin',
-        malaysiaTime
+        localTime
       ]
     });
     
@@ -452,8 +429,8 @@ export async function loginAdminUser(identifier: string, password: string): Prom
       return null;
     }
     
-    // Update last login timestamp with Malaysia time
-    const malaysiaTime = getMalaysiaTimeISO();
+    // Update last login timestamp with local time
+    const localTime = getMalaysiaTimeISO();
     
     await client.execute({
       sql: `
@@ -461,12 +438,12 @@ export async function loginAdminUser(identifier: string, password: string): Prom
         SET last_login = ?
         WHERE id = ?
       `,
-      args: [malaysiaTime, user.id]
+      args: [localTime, user.id]
     });
     
-    // Format timestamps for Malaysia time
+    // Format timestamps for display
     const createdAtFormatted = user.created_at ? formatMalaysiaTime(user.created_at as string) : undefined;
-    const lastLoginFormatted = user.last_login ? formatMalaysiaTime(user.last_login as string) : { formattedTime: malaysiaTime, isoTimestamp: malaysiaTime };
+    const lastLoginFormatted = user.last_login ? formatMalaysiaTime(user.last_login as string) : { formattedTime: localTime, isoTimestamp: localTime };
     
     return {
       id: user.id as string,
@@ -583,7 +560,11 @@ export async function getCategoriesCount(): Promise<number> {
 // Get recent activities for dashboard
 export async function getRecentActivities(limit: number = 3): Promise<any[]> {
   try {
-    console.log('Fetching recent activities with Malaysia time (GMT+8), limit:', limit);
+    // Log time differences for debugging
+    const timeComparison = getLocalAndMalaysiaTime();
+    console.log('Fetching recent activities. Current times:', 
+      'Local:', timeComparison.local, 
+      'Malaysia:', timeComparison.malaysia);
     
     // Get recent file uploads
     const recentUploads = await client.execute({
@@ -636,27 +617,39 @@ export async function getRecentActivities(limit: number = 3): Promise<any[]> {
     
     // Combine all activities
     const allActivities = [
-      ...recentUploads.rows.map((row: any) => ({
-        id: row.id,
-        type: row.type,
-        title: row.title,
-        timestamp: new Date(row.timestamp),
-        email: row.email
-      })),
-      ...recentSubscribers.rows.map((row: any) => ({
-        id: row.id,
-        type: row.type,
-        title: row.title,
-        timestamp: new Date(row.timestamp),
-        email: row.email
-      })),
-      ...recentDownloads.rows.map((row: any) => ({
-        id: row.id,
-        type: row.type,
-        title: row.title,
-        timestamp: new Date(row.timestamp),
-        email: row.email
-      }))
+      ...recentUploads.rows.map((row: any) => {
+        // Force the timestamp to be interpreted as local time
+        const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
+        return {
+          id: row.id,
+          type: row.type,
+          title: row.title,
+          timestamp: new Date(timestamp),
+          email: row.email
+        };
+      }),
+      ...recentSubscribers.rows.map((row: any) => {
+        // Force the timestamp to be interpreted as local time
+        const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
+        return {
+          id: row.id,
+          type: row.type,
+          title: row.title,
+          timestamp: new Date(timestamp),
+          email: row.email
+        };
+      }),
+      ...recentDownloads.rows.map((row: any) => {
+        // Force the timestamp to be interpreted as local time
+        const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
+        return {
+          id: row.id,
+          type: row.type,
+          title: row.title,
+          timestamp: new Date(timestamp),
+          email: row.email
+        };
+      })
     ];
     
     // Sort by timestamp (newest first) and limit to requested number
@@ -664,11 +657,11 @@ export async function getRecentActivities(limit: number = 3): Promise<any[]> {
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, limit);
     
-    // Format timestamps for Malaysia time (GMT+8)
+    // Format timestamps for local time
     const formattedActivities = sortedActivities.map(activity => {
-      // Format the timestamp for Malaysia time
+      // Format the timestamp for local time
       const { formattedTime, isoTimestamp } = formatMalaysiaTime(activity.timestamp);
-      console.log(`Activity type: ${activity.type}, title: ${activity.title}, Malaysia time: ${formattedTime}`);
+      console.log(`Activity type: ${activity.type}, title: ${activity.title}, local time: ${formattedTime}`);
       
       return {
         ...activity,

@@ -12,12 +12,11 @@ import {
   getCategoriesCount, 
   getFilesCount,
   getRecentActivities,
-  type FileInfo 
+  type FileInfo,
+  getMalaysiaTimeISO,
+  formatMalaysiaTime 
 } from '../../lib/db';
 import '../../theme/theme.css';
-
-// Add a constant for Malaysia timezone for consistency
-const MALAYSIA_TIMEZONE = '(MYT)'; // Malaysia Time
 
 // Styled Components
 const DashboardContainer = styled.div`
@@ -720,57 +719,36 @@ const FileUploadSection = ({ onUploadSuccess }: { onUploadSuccess?: () => void }
     }
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!file) return;
     
-    if (!file) {
-      setMessage('Please select a file to upload');
-      return;
-    }
-    
-    if (!file.name.endsWith('.zip')) {
-      setMessage('Only ZIP files are allowed');
-      return;
-    }
+    setUploading(true);
+    setMessage('');
     
     try {
-      setUploading(true);
-      setMessage('Uploading file...');
-      
       // Read the file as ArrayBuffer
       const buffer = await file.arrayBuffer();
       
-      // Match the upload data structure with schema.sql fields
-      await uploadFile({
+      const uploadData = {
         fileName: file.name,
         fileType: file.type,
-        description,
-        category,
         size: file.size,
-        content: buffer
-      });
+        content: buffer,
+        category,
+        description,
+        timestamp: getMalaysiaTimeISO()
+      };
       
+      await uploadFile(uploadData);
       setMessage('File uploaded successfully!');
       setFile(null);
       setDescription('');
-      
-      // Refresh the recent files list
-      const updatedFiles = await getFiles();
-      setRecentFiles(updatedFiles.slice(0, 5));
-      
-      // Notify parent component about the successful upload
       if (onUploadSuccess) {
         onUploadSuccess();
       }
-      
-      // Clear the file input
-      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
-      }
     } catch (error) {
-      console.error('Error uploading file:', error);
-      setMessage('Error uploading file. Please try again.');
+      setMessage('Error uploading file: ' + (error as Error).message);
     } finally {
       setUploading(false);
     }
@@ -779,7 +757,7 @@ const FileUploadSection = ({ onUploadSuccess }: { onUploadSuccess?: () => void }
   return (
     <UploadSection>
       <h2>Upload Script</h2>
-      <UploadForm onSubmit={handleSubmit}>
+      <UploadForm onSubmit={handleUpload}>
         <FormGroup>
           <label htmlFor="file-upload">Select ZIP File</label>
           <input
@@ -841,8 +819,10 @@ const FileUploadSection = ({ onUploadSuccess }: { onUploadSuccess?: () => void }
                 <RecentFileName>{file.fileName}</RecentFileName>
                 <RecentFileMeta>
                   <FileCategory>{file.category}</FileCategory>
-                  <TimeTooltip data-iso={file.createdAtISO}>
-                    <FileSize>{formatFileSize(file.size)} • {file.createdAt} {MALAYSIA_TIMEZONE}</FileSize>
+                  <TimeTooltip data-iso={file.createdAt}>
+                    <FileSize>
+                      {formatFileSize(file.size)} • {formatMalaysiaTime(file.createdAt).formattedTime}
+                    </FileSize>
                   </TimeTooltip>
                 </RecentFileMeta>
               </RecentFileItem>
@@ -1102,8 +1082,8 @@ const AdminDashboard = () => {
                     <ActivityIconWrapper>{getActivityIcon(activity.type)}</ActivityIconWrapper>
                     <ActivityContent>
                       <ActivityText>{getActivityText(activity)}</ActivityText>
-                      <TimeTooltip data-iso={activity.isoTimestamp}>
-                        <ActivityTime>{activity.formattedTime} {MALAYSIA_TIMEZONE}</ActivityTime>
+                      <TimeTooltip data-iso={activity.timestamp}>
+                        <ActivityTime>{formatMalaysiaTime(activity.timestamp).formattedTime}</ActivityTime>
                       </TimeTooltip>
                     </ActivityContent>
                   </ActivityItem>
