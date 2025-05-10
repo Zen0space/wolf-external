@@ -1,47 +1,46 @@
-import type { FC } from 'react';
 import { useState, useEffect } from 'react';
-import '../theme/theme.css';
-import './Dashboard.css';
-import { useTheme } from '../theme/ThemeContext';
-import { uploadFile, getCategories, getFiles, type FileInfo } from '../lib/db';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../theme/ThemeContext';
+import { uploadFile, getCategories, getFiles, type FileInfo } from '../../lib/db';
+import '../../theme/theme.css';
+import '../Dashboard.css';
 
-// Dashboard components
-const Sidebar: FC = () => {
+// Admin Sidebar component
+const AdminSidebar = () => {
   return (
     <div className="dashboard-sidebar">
       <div className="sidebar-header">
         <span className="logo-icon">🐺</span>
-        <span className="logo-text">Wolf</span>
+        <span className="logo-text">Wolf Admin</span>
       </div>
       <div className="sidebar-menu">
-        <div className="menu-item active">
+        <Link to="/admin/dashboard" className="menu-item active">
           <span className="menu-icon">📊</span>
           <span>Overview</span>
-        </div>
-        <div className="menu-item">
+        </Link>
+        <Link to="/admin/files" className="menu-item">
           <span className="menu-icon">🔑</span>
           <span>Windows Tools</span>
-        </div>
-        <div className="menu-item">
+        </Link>
+        <Link to="/admin/categories" className="menu-item">
           <span className="menu-icon">🔒</span>
           <span>Adobe Tools</span>
-        </div>
-        <div className="menu-item">
+        </Link>
+        <Link to="/admin/users" className="menu-item">
           <span className="menu-icon">⚡</span>
           <span>System Tools</span>
-        </div>
-        <div className="menu-item">
+        </Link>
+        <Link to="/admin/settings" className="menu-item">
           <span className="menu-icon">⚙️</span>
           <span>Settings</span>
-        </div>
+        </Link>
       </div>
     </div>
   );
 };
 
-const StatCard: FC<{ title: string; value: string; icon: string; color: string }> = ({ 
-  title, value, icon, color 
-}) => {
+const StatCard = ({ title, value, icon, color }: { title: string; value: string; icon: string; color: string }) => {
   return (
     <div className="stat-card">
       <div className="stat-icon" style={{ backgroundColor: color }}>
@@ -55,9 +54,7 @@ const StatCard: FC<{ title: string; value: string; icon: string; color: string }
   );
 };
 
-const ToolCard: FC<{ title: string; description: string; icon: string }> = ({
-  title, description, icon
-}) => {
+const ToolCard = ({ title, description, icon }: { title: string; description: string; icon: string }) => {
   return (
     <div className="tool-card">
       <div className="tool-header">
@@ -71,7 +68,7 @@ const ToolCard: FC<{ title: string; description: string; icon: string }> = ({
 };
 
 // File Upload Component
-const FileUploadSection: FC = () => {
+const FileUploadSection = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [description, setDescription] = useState('');
@@ -238,12 +235,18 @@ const FileUploadSection: FC = () => {
   );
 };
 
-const Dashboard: FC = () => {
+const AdminDashboard = () => {
+  const { user, logout } = useAuth();
   const { theme } = useTheme();
-  const [userName] = useState('User');
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Mock stats
+  const handleLogout = () => {
+    logout();
+    navigate('/admin/login');
+  };
+
+  // Stats
   const stats = [
     { title: 'Scripts Run', value: '86', icon: '🚀', color: 'rgba(74, 144, 226, 0.2)' },
     { title: 'Tools Used', value: '12', icon: '🔧', color: 'rgba(0, 216, 122, 0.2)' },
@@ -251,7 +254,7 @@ const Dashboard: FC = () => {
     { title: 'Adobe Blocks', value: '24', icon: '🔒', color: 'rgba(255, 99, 132, 0.2)' }
   ];
   
-  // Mock tools
+  // Tools
   const tools = [
     {
       title: 'Windows Activation',
@@ -277,16 +280,14 @@ const Dashboard: FC = () => {
   
   return (
     <div className="dashboard-container" data-theme={theme}>
-      <Sidebar />
+      <AdminSidebar />
       <div className="dashboard-content">
         <div className="dashboard-header">
-          <h1>Welcome back, {userName}</h1>
-          <p className="date">{new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}</p>
+          <h1>Welcome back, {user?.username}</h1>
+          <div className="admin-user-info">
+            <span className="admin-user-name">{user?.username}</span>
+            <button className="btn-logout" onClick={handleLogout}>Logout</button>
+          </div>
           
           <div className="dashboard-tabs">
             <button 
@@ -373,4 +374,4 @@ const Dashboard: FC = () => {
   );
 };
 
-export default Dashboard; 
+export default AdminDashboard; 

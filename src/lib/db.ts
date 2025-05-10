@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
+import bcrypt from 'bcryptjs';
 
 // Database client
 const client = createClient({
@@ -27,6 +28,19 @@ export interface FileInfo {
   category: string;
   size: number;
   createdAt: string;
+}
+
+// Interface for admin user
+export interface AdminUser {
+  id?: string;
+  username: string;
+  email: string;
+  passwordHash?: string;
+  password?: string; // Used only for signup/login, not stored
+  isActive?: boolean;
+  role?: string;
+  createdAt?: Date;
+  lastLogin?: Date;
 }
 
 // Get available categories
@@ -235,6 +249,119 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
   }
   
   return bytes.buffer;
+}
+
+// Admin authentication functions
+
+// Create admin user (signup)
+export async function createAdminUser(user: AdminUser): Promise<string> {
+  try {
+    const id = uuidv4();
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(user.password!, salt);
+    
+    await client.execute({
+      sql: `
+        INSERT INTO admin_users (
+          id, username, email, password_hash, is_active, role
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      args: [
+        id,
+        user.username,
+        user.email,
+        passwordHash,
+        user.isActive !== undefined ? user.isActive : true,
+        user.role || 'admin'
+      ]
+    });
+    
+    return id;
+  } catch (error) {
+    console.error('Error creating admin user:', error);
+    throw error;
+  }
+}
+
+// Login admin user
+export async function loginAdminUser(identifier: string, password: string): Promise<AdminUser | null> {
+  try {
+    // Check if identifier is email or username
+    const result = await client.execute({
+      sql: `
+        SELECT id, username, email, password_hash, is_active, role, created_at
+        FROM admin_users
+        WHERE (username = ? OR email = ?)
+      `,
+      args: [identifier, identifier]
+    });
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+    
+    const user = result.rows[0];
+    const isMatch = await bcrypt.compare(password, user.password_hash as string);
+    
+    if (!isMatch) {
+      return null;
+    }
+    
+    // Update last login timestamp
+    await client.execute({
+      sql: `
+        UPDATE admin_users
+        SET last_login = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+      args: [user.id]
+    });
+    
+    return {
+      id: user.id as string,
+      username: user.username as string,
+      email: user.email as string,
+      isActive: Boolean(user.is_active),
+      role: user.role as string,
+      createdAt: user.created_at ? new Date(user.created_at as string) : undefined
+    };
+  } catch (error) {
+    console.error('Error logging in admin user:', error);
+    throw error;
+  }
+}
+
+// Get admin user by ID
+export async function getAdminUserById(id: string): Promise<AdminUser | null> {
+  try {
+    const result = await client.execute({
+      sql: `
+        SELECT id, username, email, is_active, role, created_at, last_login
+        FROM admin_users
+        WHERE id = ?
+      `,
+      args: [id]
+    });
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+    
+    const user = result.rows[0];
+    
+    return {
+      id: user.id as string,
+      username: user.username as string,
+      email: user.email as string,
+      isActive: Boolean(user.is_active),
+      role: user.role as string,
+      createdAt: user.created_at ? new Date(user.created_at as string) : undefined,
+      lastLogin: user.last_login ? new Date(user.last_login as string) : undefined
+    };
+  } catch (error) {
+    console.error('Error fetching admin user:', error);
+    throw error;
+  }
 }
 
 export default client; 

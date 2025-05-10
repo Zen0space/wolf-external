@@ -48,7 +48,21 @@ CREATE TABLE IF NOT EXISTS email_subscribers (
   FOREIGN KEY (file_id) REFERENCES files(id)
 );
 
+-- Create admin users table (for admin authentication)
+CREATE TABLE IF NOT EXISTS admin_users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  role TEXT DEFAULT 'admin',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  last_login DATETIME
+);
+
 -- Index for faster queries
 CREATE INDEX IF NOT EXISTS idx_files_category ON files(category);
 CREATE INDEX IF NOT EXISTS idx_downloads_file_id ON downloads(file_id);
-CREATE INDEX IF NOT EXISTS idx_email_subscribers_email ON email_subscribers(email); 
+CREATE INDEX IF NOT EXISTS idx_email_subscribers_email ON email_subscribers(email);
+CREATE INDEX IF NOT EXISTS idx_admin_users_username ON admin_users(username);
+CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email); 
