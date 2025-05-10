@@ -19,7 +19,7 @@ export function getMalaysiaTimeISO(): string {
   const now = new Date();
   
   // Add 8 hours to convert to Malaysia time
-  const malaysiaTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+  const malaysiaTime = new Date(now.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
   
   // Format to ISO string
   const year = malaysiaTime.getFullYear();
@@ -38,7 +38,7 @@ export function getMalaysiaTimeISO(): string {
 // Convert any date to Malaysia timezone ISO 8601 string
 export function toMalaysiaTimeISO(date: Date): string {
   // Add 8 hours to convert to Malaysia time
-  const malaysiaTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+  const malaysiaTime = new Date(date.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
   
   // Format to ISO string
   const year = malaysiaTime.getFullYear();
@@ -60,14 +60,14 @@ export function formatMalaysiaTime(timestamp: Date | string): { formattedTime: s
   const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
   
   // Add 8 hours to convert from GMT+0 to GMT+8 (Malaysia time)
-  const malaysiaDate = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+  const malaysiaDate = new Date(date.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
   
   // Format ISO timestamp
   const isoTimestamp = malaysiaDate.toISOString().replace('Z', '+08:00');
   
   // Get current date in Malaysia time for comparison
   const now = new Date();
-  const nowMalaysia = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+  const nowMalaysia = new Date(now.getTime() + (MALAYSIA_HOURS_OFFSET * 60 * 60 * 1000));
   
   // For day comparison, use UTC methods to avoid timezone issues
   const isToday = 
