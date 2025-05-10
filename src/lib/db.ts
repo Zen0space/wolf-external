@@ -36,66 +36,82 @@ export function formatMalaysiaTime(timestamp: Date | string): { formattedTime: s
   // Convert the timestamp to a Date object
   let date: Date;
   
-  if (typeof timestamp === 'string') {
-    // Remove timezone offset if present and create date
-    const cleanTimestamp = timestamp.replace(/([+-]\d{2}:?\d{2}|Z)$/, '');
-    date = new Date(cleanTimestamp);
-  } else {
-    date = new Date(timestamp);
+  try {
+    if (typeof timestamp === 'string') {
+      // Remove timezone offset if present and create date
+      const cleanTimestamp = timestamp.replace(/([+-]\d{2}:?\d{2}|Z)$/, '');
+      date = new Date(cleanTimestamp);
+    } else {
+      date = new Date(timestamp);
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      // If date is invalid, use current date as fallback
+      console.warn('Invalid date detected, using current date as fallback');
+      date = new Date();
+    }
+    
+    // Create ISO timestamp with Malaysia offset
+    const isoTimestamp = date.toISOString().replace('Z', '+08:00');
+    
+    // Get current date for comparison
+    const now = new Date();
+    
+    // For day comparison
+    const isToday = 
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate();
+    
+    // Check if it's yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    
+    const isYesterday = 
+      date.getFullYear() === yesterday.getFullYear() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getDate() === yesterday.getDate();
+    
+    // Format the time part (HH:MM)
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    
+    // Determine if AM or PM
+    const period = hours >= 12 ? 'PM' : 'AM';
+    
+    // Convert 24-hour format to 12-hour format
+    const hours12 = hours % 12 || 12;
+    
+    // Format with leading zeros
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+    
+    // Format day/month/year for display if needed
+    const displayDay = date.getDate().toString().padStart(2, '0');
+    const displayMonth = date.toLocaleString('en-US', { month: 'short' });
+    const displayYear = date.getFullYear();
+    
+    let formattedTime;
+    if (isToday) {
+      formattedTime = `Today, ${hours12}:${formattedMinutes} ${period} (MYT)`;
+    } else if (isYesterday) {
+      formattedTime = `Yesterday, ${hours12}:${formattedMinutes} ${period} (MYT)`;
+    } else {
+      formattedTime = `${displayDay} ${displayMonth} ${displayYear}, ${hours12}:${formattedMinutes} ${period} (MYT)`;
+    }
+    
+    return {
+      formattedTime,
+      isoTimestamp
+    };
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    // Return fallback values
+    return {
+      formattedTime: 'Date unavailable',
+      isoTimestamp: new Date().toISOString().replace('Z', '+08:00')
+    };
   }
-  
-  // Create ISO timestamp with Malaysia offset
-  const isoTimestamp = date.toISOString().replace('Z', '+08:00');
-  
-  // Get current date for comparison
-  const now = new Date();
-  
-  // For day comparison
-  const isToday = 
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-  
-  // Check if it's yesterday
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  
-  const isYesterday = 
-    date.getFullYear() === yesterday.getFullYear() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getDate() === yesterday.getDate();
-  
-  // Format the time part (HH:MM)
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  
-  // Determine if AM or PM
-  const period = hours >= 12 ? 'PM' : 'AM';
-  
-  // Convert 24-hour format to 12-hour format
-  const hours12 = hours % 12 || 12;
-  
-  // Format with leading zeros
-  const formattedMinutes = minutes.toString().padStart(2, '0');
-  
-  // Format day/month/year for display if needed
-  const displayDay = date.getDate().toString().padStart(2, '0');
-  const displayMonth = date.toLocaleString('en-US', { month: 'short' });
-  const displayYear = date.getFullYear();
-  
-  let formattedTime;
-  if (isToday) {
-    formattedTime = `Today, ${hours12}:${formattedMinutes} ${period} (MYT)`;
-  } else if (isYesterday) {
-    formattedTime = `Yesterday, ${hours12}:${formattedMinutes} ${period} (MYT)`;
-  } else {
-    formattedTime = `${displayDay} ${displayMonth} ${displayYear}, ${hours12}:${formattedMinutes} ${period} (MYT)`;
-  }
-  
-  return {
-    formattedTime,
-    isoTimestamp
-  };
 }
 
 // Interface for file upload
@@ -618,56 +634,105 @@ export async function getRecentActivities(limit: number = 3): Promise<any[]> {
     // Combine all activities
     const allActivities = [
       ...recentUploads.rows.map((row: any) => {
-        // Force the timestamp to be interpreted as local time
-        const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
-        return {
-          id: row.id,
-          type: row.type,
-          title: row.title,
-          timestamp: new Date(timestamp),
-          email: row.email
-        };
+        try {
+          // Force the timestamp to be interpreted as local time
+          const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
+          return {
+            id: row.id,
+            type: row.type,
+            title: row.title,
+            timestamp: new Date(timestamp),
+            email: row.email
+          };
+        } catch (error) {
+          console.error('Error processing upload row:', error);
+          return {
+            id: row.id || 'unknown',
+            type: row.type || 'upload',
+            title: row.title || 'Unknown file',
+            timestamp: new Date(), // Use current date as fallback
+            email: row.email
+          };
+        }
       }),
       ...recentSubscribers.rows.map((row: any) => {
-        // Force the timestamp to be interpreted as local time
-        const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
-        return {
-          id: row.id,
-          type: row.type,
-          title: row.title,
-          timestamp: new Date(timestamp),
-          email: row.email
-        };
+        try {
+          // Force the timestamp to be interpreted as local time
+          const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
+          return {
+            id: row.id,
+            type: row.type,
+            title: row.title,
+            timestamp: new Date(timestamp),
+            email: row.email
+          };
+        } catch (error) {
+          console.error('Error processing subscriber row:', error);
+          return {
+            id: row.id || 'unknown',
+            type: row.type || 'subscriber',
+            title: row.title || 'Unknown subscriber',
+            timestamp: new Date(), // Use current date as fallback
+            email: row.email || 'unknown@example.com'
+          };
+        }
       }),
       ...recentDownloads.rows.map((row: any) => {
-        // Force the timestamp to be interpreted as local time
-        const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
-        return {
-          id: row.id,
-          type: row.type,
-          title: row.title,
-          timestamp: new Date(timestamp),
-          email: row.email
-        };
+        try {
+          // Force the timestamp to be interpreted as local time
+          const timestamp = row.timestamp ? row.timestamp.replace('Z', '') : new Date().toISOString().replace('Z', '');
+          return {
+            id: row.id,
+            type: row.type,
+            title: row.title,
+            timestamp: new Date(timestamp),
+            email: row.email
+          };
+        } catch (error) {
+          console.error('Error processing download row:', error);
+          return {
+            id: row.id || 'unknown',
+            type: row.type || 'download',
+            title: row.title || 'Unknown file',
+            timestamp: new Date(), // Use current date as fallback
+            email: row.email
+          };
+        }
       })
     ];
     
     // Sort by timestamp (newest first) and limit to requested number
     const sortedActivities = allActivities
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .sort((a, b) => {
+        try {
+          return b.timestamp.getTime() - a.timestamp.getTime();
+        } catch (error) {
+          console.error('Error sorting timestamps:', error);
+          return 0; // Keep original order if comparison fails
+        }
+      })
       .slice(0, limit);
     
     // Format timestamps for local time
     const formattedActivities = sortedActivities.map(activity => {
-      // Format the timestamp for local time
-      const { formattedTime, isoTimestamp } = formatMalaysiaTime(activity.timestamp);
-      console.log(`Activity type: ${activity.type}, title: ${activity.title}, local time: ${formattedTime}`);
-      
-      return {
-        ...activity,
-        formattedTime,
-        isoTimestamp
-      };
+      try {
+        // Format the timestamp for local time
+        const { formattedTime, isoTimestamp } = formatMalaysiaTime(activity.timestamp);
+        console.log(`Activity type: ${activity.type}, title: ${activity.title}, local time: ${formattedTime}`);
+        
+        return {
+          ...activity,
+          formattedTime,
+          isoTimestamp
+        };
+      } catch (error) {
+        console.error('Error formatting activity timestamp:', error);
+        return {
+          ...activity,
+          formattedTime: 'Date unavailable',
+          isoTimestamp: new Date().toISOString().replace('Z', '+08:00')
+        };
+      }
     });
     
     return formattedActivities;

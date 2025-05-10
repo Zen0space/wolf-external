@@ -723,9 +723,9 @@ const FileUploadSection = ({ onUploadSuccess }: { onUploadSuccess?: () => void }
     e.preventDefault();
     if (!file) return;
     
-    setUploading(true);
+      setUploading(true);
     setMessage('');
-    
+      
     try {
       // Read the file as ArrayBuffer
       const buffer = await file.arrayBuffer();
@@ -1082,8 +1082,8 @@ const AdminDashboard = () => {
                     <ActivityIconWrapper>{getActivityIcon(activity.type)}</ActivityIconWrapper>
                     <ActivityContent>
                       <ActivityText>{getActivityText(activity)}</ActivityText>
-                      <TimeTooltip data-iso={activity.timestamp}>
-                        <ActivityTime>{formatMalaysiaTime(activity.timestamp).formattedTime}</ActivityTime>
+                      <TimeTooltip data-iso={activity.isoTimestamp}>
+                        <ActivityTime>{activity.formattedTime}</ActivityTime>
                       </TimeTooltip>
                     </ActivityContent>
                   </ActivityItem>
