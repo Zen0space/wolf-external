@@ -8,6 +8,119 @@ const client = createClient({
   authToken: import.meta.env.VITE_TURSO_AUTH_TOKEN as string,
 });
 
+// Malaysia timezone helper functions
+// Malaysia is UTC+8
+const MALAYSIA_TIMEZONE_OFFSET = '+08:00';
+const MALAYSIA_HOURS_OFFSET = 8;
+
+// Get current time in Malaysia timezone as ISO 8601 string
+export function getMalaysiaTimeISO(): string {
+  // Get current time
+  const now = new Date();
+  
+  // Add 8 hours to convert to Malaysia time
+  const malaysiaTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+  
+  // Format to ISO string
+  const year = malaysiaTime.getFullYear();
+  const month = (malaysiaTime.getMonth() + 1).toString().padStart(2, '0');
+  const day = malaysiaTime.getDate().toString().padStart(2, '0');
+  const hour = malaysiaTime.getHours().toString().padStart(2, '0');
+  const minute = malaysiaTime.getMinutes().toString().padStart(2, '0');
+  const second = malaysiaTime.getSeconds().toString().padStart(2, '0');
+  
+  // Create ISO 8601 string with +08:00 timezone
+  const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}${MALAYSIA_TIMEZONE_OFFSET}`;
+  
+  return isoString;
+}
+
+// Convert any date to Malaysia timezone ISO 8601 string
+export function toMalaysiaTimeISO(date: Date): string {
+  // Add 8 hours to convert to Malaysia time
+  const malaysiaTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+  
+  // Format to ISO string
+  const year = malaysiaTime.getFullYear();
+  const month = (malaysiaTime.getMonth() + 1).toString().padStart(2, '0');
+  const day = malaysiaTime.getDate().toString().padStart(2, '0');
+  const hour = malaysiaTime.getHours().toString().padStart(2, '0');
+  const minute = malaysiaTime.getMinutes().toString().padStart(2, '0');
+  const second = malaysiaTime.getSeconds().toString().padStart(2, '0');
+  
+  // Create ISO 8601 string with +08:00 timezone
+  const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}${MALAYSIA_TIMEZONE_OFFSET}`;
+  
+  return isoString;
+}
+
+// Format a date for Malaysia time display (Today, Yesterday, or specific date)
+export function formatMalaysiaTime(timestamp: Date | string): { formattedTime: string, isoTimestamp: string } {
+  // Convert the timestamp to a Date object
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
+  
+  // Add 8 hours to convert from GMT+0 to GMT+8 (Malaysia time)
+  const malaysiaDate = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+  
+  // Format ISO timestamp
+  const isoTimestamp = malaysiaDate.toISOString().replace('Z', '+08:00');
+  
+  // Get current date in Malaysia time for comparison
+  const now = new Date();
+  const nowMalaysia = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+  
+  // For day comparison, use UTC methods to avoid timezone issues
+  const isToday = 
+    malaysiaDate.getUTCFullYear() === nowMalaysia.getUTCFullYear() &&
+    malaysiaDate.getUTCMonth() === nowMalaysia.getUTCMonth() &&
+    malaysiaDate.getUTCDate() === nowMalaysia.getUTCDate();
+  
+  // Check if it's yesterday by comparing the date value (day before)
+  const yesterdayMalaysia = new Date(nowMalaysia);
+  yesterdayMalaysia.setUTCDate(nowMalaysia.getUTCDate() - 1);
+  
+  const isYesterday = 
+    malaysiaDate.getUTCFullYear() === yesterdayMalaysia.getUTCFullYear() &&
+    malaysiaDate.getUTCMonth() === yesterdayMalaysia.getUTCMonth() &&
+    malaysiaDate.getUTCDate() === yesterdayMalaysia.getUTCDate();
+  
+  // Format the time part (HH:MM)
+  const hours = malaysiaDate.getHours();
+  const minutes = malaysiaDate.getMinutes();
+  
+  // Determine if AM or PM
+  const period = hours >= 12 ? 'PM' : 'AM';
+  
+  // Convert 24-hour format to 12-hour format
+  const hours12 = hours % 12 || 12;
+  
+  // Format with leading zeros
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+  
+  // Format the time string
+  const timeString = `${hours12}:${formattedMinutes} ${period}`;
+  
+  let formattedTime;
+  if (isToday) {
+    // Today
+    formattedTime = `Today, ${timeString}`;
+  } else if (isYesterday) {
+    // Yesterday
+    formattedTime = `Yesterday, ${timeString}`;
+  } else {
+    // Format date as DD MMM YYYY
+    const day = malaysiaDate.getDate().toString().padStart(2, '0');
+    const month = malaysiaDate.toLocaleString('en-US', { month: 'short' });
+    const year = malaysiaDate.getFullYear();
+    formattedTime = `${day} ${month} ${year}, ${timeString}`;
+  }
+  
+  return {
+    formattedTime,
+    isoTimestamp
+  };
+}
+
 // Interface for file upload
 export interface FileUpload {
   id?: string;
@@ -28,6 +141,7 @@ export interface FileInfo {
   category: string;
   size: number;
   createdAt: string;
+  createdAtISO: string; // Add ISO timestamp
 }
 
 // Interface for admin user
@@ -40,7 +154,9 @@ export interface AdminUser {
   isActive?: boolean;
   role?: string;
   createdAt?: Date;
+  createdAtISO?: string; // Add ISO timestamp
   lastLogin?: Date;
+  lastLoginISO?: string; // Add ISO timestamp
 }
 
 // Get available categories
@@ -64,11 +180,14 @@ export async function uploadFile(file: FileUpload): Promise<string> {
     // Convert Uint8Array or ArrayBuffer to Base64 for storage
     const contentBase64 = arrayBufferToBase64(file.content);
     
+    // Use explicit Malaysia time for created_at and updated_at
+    const malaysiaTime = getMalaysiaTimeISO();
+    
     await client.execute({
       sql: `
         INSERT INTO files (
-          id, file_name, file_type, description, category, size, content
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          id, file_name, file_type, description, category, size, content, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         fileId,
@@ -77,7 +196,9 @@ export async function uploadFile(file: FileUpload): Promise<string> {
         file.description || '',
         file.category,
         file.size,
-        contentBase64
+        contentBase64,
+        malaysiaTime,
+        malaysiaTime
       ]
     });
     
@@ -110,15 +231,21 @@ export async function getFiles(category?: string): Promise<FileInfo[]> {
       args
     });
     
-    return result.rows.map((row: any) => ({
-      id: row.id as string,
-      fileName: row.file_name as string,
-      fileType: row.file_type as string,
-      description: row.description as string,
-      category: row.category as string,
-      size: Number(row.size),
-      createdAt: row.created_at as string
-    }));
+    return result.rows.map((row: any) => {
+      const createdAt = row.created_at as string;
+      const { formattedTime, isoTimestamp } = formatMalaysiaTime(createdAt);
+      
+      return {
+        id: row.id as string,
+        fileName: row.file_name as string,
+        fileType: row.file_type as string,
+        description: row.description as string,
+        category: row.category as string,
+        size: Number(row.size),
+        createdAt: formattedTime,
+        createdAtISO: isoTimestamp
+      };
+    });
   } catch (error) {
     console.error('Error fetching files:', error);
     throw error;
@@ -139,11 +266,16 @@ export async function getFile(id: string) {
     
     const file = result.rows[0];
     
-    // Track download
+    // Track download using explicit Malaysia time
+    const malaysiaTime = getMalaysiaTimeISO();
+    
     await client.execute({
-      sql: 'INSERT INTO downloads (id, file_id) VALUES (?, ?)',
-      args: [uuidv4(), id]
+      sql: 'INSERT INTO downloads (id, file_id, downloaded_at) VALUES (?, ?, ?)',
+      args: [uuidv4(), id, malaysiaTime]
     });
+    
+    const createdAt = file.created_at as string;
+    const { formattedTime, isoTimestamp } = formatMalaysiaTime(createdAt);
     
     return {
       id: file.id as string,
@@ -153,7 +285,8 @@ export async function getFile(id: string) {
       category: file.category as string,
       size: Number(file.size),
       content: base64ToArrayBuffer(file.content as string),
-      createdAt: file.created_at as string
+      createdAt: formattedTime,
+      createdAtISO: isoTimestamp
     };
   } catch (error) {
     console.error('Error fetching file:', error);
@@ -179,35 +312,43 @@ export async function getDownloadCount(fileId: string): Promise<number> {
 // Save email subscriber when downloading a file
 export async function saveEmailSubscriber(email: string, fileId: string): Promise<string> {
   try {
+    // Get current Malaysia time as ISO string
+    const malaysiaTime = getMalaysiaTimeISO();
+    
     // First try to update existing record
     const updateResult = await client.execute({
       sql: `
         UPDATE email_subscribers
         SET download_count = download_count + 1,
-            last_download_at = CURRENT_TIMESTAMP,
+            last_download_at = ?, -- Use Malaysia time explicitly
             file_id = ?
         WHERE email = ?
       `,
-      args: [fileId, email]
+      args: [malaysiaTime, fileId, email]
     });
     
     // If no existing record was updated, insert a new one
     if (updateResult.rowsAffected === 0) {
       const subscriberId = uuidv4();
+      
       await client.execute({
         sql: `
           INSERT INTO email_subscribers (
-            id, email, file_id, ip_address
-          ) VALUES (?, ?, ?, ?)
+            id, email, file_id, ip_address, last_download_at, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?)
         `,
         args: [
           subscriberId,
           email,
           fileId,
-          'N/A' // In a real app, you would get the IP address from the request
+          'N/A', // In a real app, you would get the IP address from the request
+          malaysiaTime,
+          malaysiaTime
         ]
       });
       return subscriberId;
+    } else {
+      console.log('Updated existing subscriber:', email);
     }
     
     // If we updated an existing record, get and return its ID
@@ -260,11 +401,14 @@ export async function createAdminUser(user: AdminUser): Promise<string> {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(user.password!, salt);
     
+    // Use Malaysia time
+    const malaysiaTime = getMalaysiaTimeISO();
+    
     await client.execute({
       sql: `
         INSERT INTO admin_users (
-          id, username, email, password_hash, is_active, role
-        ) VALUES (?, ?, ?, ?, ?, ?)
+          id, username, email, password_hash, is_active, role, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         id,
@@ -272,7 +416,8 @@ export async function createAdminUser(user: AdminUser): Promise<string> {
         user.email,
         passwordHash,
         user.isActive !== undefined ? user.isActive : true,
-        user.role || 'admin'
+        user.role || 'admin',
+        malaysiaTime
       ]
     });
     
@@ -289,7 +434,7 @@ export async function loginAdminUser(identifier: string, password: string): Prom
     // Check if identifier is email or username
     const result = await client.execute({
       sql: `
-        SELECT id, username, email, password_hash, is_active, role, created_at
+        SELECT id, username, email, password_hash, is_active, role, created_at, last_login
         FROM admin_users
         WHERE (username = ? OR email = ?)
       `,
@@ -307,15 +452,21 @@ export async function loginAdminUser(identifier: string, password: string): Prom
       return null;
     }
     
-    // Update last login timestamp
+    // Update last login timestamp with Malaysia time
+    const malaysiaTime = getMalaysiaTimeISO();
+    
     await client.execute({
       sql: `
         UPDATE admin_users
-        SET last_login = CURRENT_TIMESTAMP
+        SET last_login = ?
         WHERE id = ?
       `,
-      args: [user.id]
+      args: [malaysiaTime, user.id]
     });
+    
+    // Format timestamps for Malaysia time
+    const createdAtFormatted = user.created_at ? formatMalaysiaTime(user.created_at as string) : undefined;
+    const lastLoginFormatted = user.last_login ? formatMalaysiaTime(user.last_login as string) : { formattedTime: malaysiaTime, isoTimestamp: malaysiaTime };
     
     return {
       id: user.id as string,
@@ -323,7 +474,10 @@ export async function loginAdminUser(identifier: string, password: string): Prom
       email: user.email as string,
       isActive: Boolean(user.is_active),
       role: user.role as string,
-      createdAt: user.created_at ? new Date(user.created_at as string) : undefined
+      createdAt: user.created_at ? new Date(user.created_at as string) : undefined,
+      createdAtISO: createdAtFormatted?.isoTimestamp,
+      lastLogin: new Date(),
+      lastLoginISO: lastLoginFormatted?.isoTimestamp
     };
   } catch (error) {
     console.error('Error logging in admin user:', error);
@@ -349,6 +503,10 @@ export async function getAdminUserById(id: string): Promise<AdminUser | null> {
     
     const user = result.rows[0];
     
+    // Format timestamps for Malaysia time
+    const createdAtFormatted = user.created_at ? formatMalaysiaTime(user.created_at as string) : undefined;
+    const lastLoginFormatted = user.last_login ? formatMalaysiaTime(user.last_login as string) : undefined;
+    
     return {
       id: user.id as string,
       username: user.username as string,
@@ -356,10 +514,172 @@ export async function getAdminUserById(id: string): Promise<AdminUser | null> {
       isActive: Boolean(user.is_active),
       role: user.role as string,
       createdAt: user.created_at ? new Date(user.created_at as string) : undefined,
-      lastLogin: user.last_login ? new Date(user.last_login as string) : undefined
+      createdAtISO: createdAtFormatted?.isoTimestamp,
+      lastLogin: user.last_login ? new Date(user.last_login as string) : undefined,
+      lastLoginISO: lastLoginFormatted?.isoTimestamp
     };
   } catch (error) {
     console.error('Error fetching admin user:', error);
+    throw error;
+  }
+}
+
+// Get total number of downloads across all files
+export async function getTotalDownloadsCount(): Promise<number> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM downloads',
+    });
+    
+    return Number(result.rows[0].count);
+  } catch (error) {
+    console.error('Error counting total downloads:', error);
+    throw error;
+  }
+}
+
+// Get total number of files
+export async function getFilesCount(): Promise<number> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM files',
+    });
+    
+    return Number(result.rows[0].count);
+  } catch (error) {
+    console.error('Error counting files:', error);
+    throw error;
+  }
+}
+
+// Get total number of email subscribers
+export async function getSubscribersCount(): Promise<number> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM email_subscribers',
+    });
+    
+    return Number(result.rows[0].count);
+  } catch (error) {
+    console.error('Error counting subscribers:', error);
+    throw error;
+  }
+}
+
+// Get total number of categories
+export async function getCategoriesCount(): Promise<number> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM categories',
+    });
+    
+    return Number(result.rows[0].count);
+  } catch (error) {
+    console.error('Error counting categories:', error);
+    throw error;
+  }
+}
+
+// Get recent activities for dashboard
+export async function getRecentActivities(limit: number = 3): Promise<any[]> {
+  try {
+    console.log('Fetching recent activities with Malaysia time (GMT+8), limit:', limit);
+    
+    // Get recent file uploads
+    const recentUploads = await client.execute({
+      sql: `
+        SELECT 
+          id, 
+          'upload' as type, 
+          file_name as title, 
+          created_at as timestamp,
+          NULL as email
+        FROM files 
+        ORDER BY created_at DESC 
+        LIMIT ?
+      `,
+      args: [limit]
+    });
+    
+    // Get recent subscribers
+    const recentSubscribers = await client.execute({
+      sql: `
+        SELECT 
+          id, 
+          'subscriber' as type, 
+          email as title, 
+          created_at as timestamp,
+          email
+        FROM email_subscribers 
+        ORDER BY created_at DESC 
+        LIMIT ?
+      `,
+      args: [limit]
+    });
+    
+    // Get recent downloads
+    const recentDownloads = await client.execute({
+      sql: `
+        SELECT 
+          d.id, 
+          'download' as type, 
+          f.file_name as title, 
+          d.downloaded_at as timestamp,
+          NULL as email
+        FROM downloads d
+        JOIN files f ON d.file_id = f.id
+        ORDER BY d.downloaded_at DESC 
+        LIMIT ?
+      `,
+      args: [limit]
+    });
+    
+    // Combine all activities
+    const allActivities = [
+      ...recentUploads.rows.map((row: any) => ({
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        timestamp: new Date(row.timestamp),
+        email: row.email
+      })),
+      ...recentSubscribers.rows.map((row: any) => ({
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        timestamp: new Date(row.timestamp),
+        email: row.email
+      })),
+      ...recentDownloads.rows.map((row: any) => ({
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        timestamp: new Date(row.timestamp),
+        email: row.email
+      }))
+    ];
+    
+    // Sort by timestamp (newest first) and limit to requested number
+    const sortedActivities = allActivities
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, limit);
+    
+    // Format timestamps for Malaysia time (GMT+8)
+    const formattedActivities = sortedActivities.map(activity => {
+      // Format the timestamp for Malaysia time
+      const { formattedTime, isoTimestamp } = formatMalaysiaTime(activity.timestamp);
+      console.log(`Activity type: ${activity.type}, title: ${activity.title}, Malaysia time: ${formattedTime}`);
+      
+      return {
+        ...activity,
+        formattedTime,
+        isoTimestamp
+      };
+    });
+    
+    return formattedActivities;
+  } catch (error) {
+    console.error('Error fetching recent activities:', error);
     throw error;
   }
 }
