@@ -2,9 +2,11 @@ import type { FC, CSSProperties } from 'react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../theme/ThemeContext';
 import '../theme/theme.css';
+import SupportMe from '../components/SupportMe';
 
 import { getFiles, getCategories, getDownloadCount, getFile, saveEmailSubscriber, type FileInfo } from '../lib/db';
 
+// Define the CategoryInfo interface
 interface CategoryInfo {
   id: string;
   name: string;
@@ -615,6 +617,9 @@ const Scripts: FC = () => {
           </button>
         </div>
       )}
+      
+      {/* Use the SupportMe component instead of the inline button */}
+      <SupportMe />
     </div>
   );
 };

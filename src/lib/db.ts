@@ -152,6 +152,23 @@ export interface AdminUser {
   lastLoginISO?: string; // Add ISO timestamp
 }
 
+// Interface for payment settings
+export interface PaymentSetting {
+  id: string;
+  paymentType: string;
+  isEnabled: boolean;
+  displayName: string;
+  description: string;
+  icon: string;
+  position: number;
+  qrImageUrl: string;
+  qrImageType?: string;
+  paymentLink: string;
+  contactInfo: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Get available categories
 export async function getCategories() {
   try {
@@ -739,6 +756,179 @@ export async function getRecentActivities(limit: number = 3): Promise<any[]> {
   } catch (error) {
     console.error('Error fetching recent activities:', error);
     throw error;
+  }
+}
+
+// Get all payment settings
+export async function getPaymentSettings(): Promise<PaymentSetting[]> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT * FROM payment_settings ORDER BY position ASC',
+    });
+    
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      paymentType: row.payment_type,
+      isEnabled: Boolean(row.is_enabled),
+      displayName: row.display_name,
+      description: row.description || '',
+      icon: row.icon || '💰',
+      position: Number(row.position),
+      qrImageUrl: row.qr_image_url || '',
+      qrImageType: row.qr_image_type || '',
+      paymentLink: row.payment_link || '',
+      contactInfo: row.contact_info || '',
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+  } catch (error) {
+    console.error('Error fetching payment settings:', error);
+    return [];
+  }
+}
+
+// Add or update payment setting
+export async function savePaymentSetting(setting: PaymentSetting): Promise<string> {
+  try {
+    const timestamp = getMalaysiaTimeISO();
+    
+    // If no ID is provided, generate one from the display name
+    const id = setting.id || setting.displayName.toLowerCase().replace(/\s+/g, '-');
+    
+    // Determine image type from data URL if it exists and is a data URL
+    let qrImageType = setting.qrImageType || '';
+    if (setting.qrImageUrl && setting.qrImageUrl.startsWith('data:image/')) {
+      const match = setting.qrImageUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/);
+      if (match) {
+        qrImageType = match[1];
+      }
+    }
+    
+    // Check if setting already exists
+    const existingSetting = await client.execute({
+      sql: 'SELECT id FROM payment_settings WHERE id = ?',
+      args: [id]
+    });
+    
+    if (existingSetting.rows.length > 0) {
+      // Update existing setting
+      await client.execute({
+        sql: `
+          UPDATE payment_settings SET
+            payment_type = ?,
+            is_enabled = ?,
+            display_name = ?,
+            description = ?,
+            icon = ?,
+            position = ?,
+            qr_image_url = ?,
+            qr_image_type = ?,
+            payment_link = ?,
+            contact_info = ?,
+            updated_at = ?
+          WHERE id = ?
+        `,
+        args: [
+          setting.paymentType,
+          setting.isEnabled ? 1 : 0,
+          setting.displayName,
+          setting.description || '',
+          setting.icon || '💰',
+          setting.position,
+          setting.qrImageUrl || '',
+          qrImageType,
+          setting.paymentLink || '',
+          setting.contactInfo || '',
+          timestamp,
+          id
+        ]
+      });
+    } else {
+      // Insert new setting
+      await client.execute({
+        sql: `
+          INSERT INTO payment_settings (
+            id, payment_type, is_enabled, display_name, description, 
+            icon, position, qr_image_url, qr_image_type, payment_link, contact_info,
+            created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        args: [
+          id,
+          setting.paymentType,
+          setting.isEnabled ? 1 : 0,
+          setting.displayName,
+          setting.description || '',
+          setting.icon || '💰',
+          setting.position,
+          setting.qrImageUrl || '',
+          qrImageType,
+          setting.paymentLink || '',
+          setting.contactInfo || '',
+          timestamp,
+          timestamp
+        ]
+      });
+    }
+    
+    return id;
+  } catch (error) {
+    console.error('Error saving payment setting:', error);
+    throw error;
+  }
+}
+
+// Delete payment setting
+export async function deletePaymentSetting(id: string): Promise<boolean> {
+  try {
+    await client.execute({
+      sql: 'DELETE FROM payment_settings WHERE id = ?',
+      args: [id]
+    });
+    return true;
+  } catch (error) {
+    console.error('Error deleting payment setting:', error);
+    return false;
+  }
+}
+
+// Get QR image URL for the support component
+export async function getQRPaymentImage(): Promise<string> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT qr_image_url FROM payment_settings WHERE payment_type = ? AND is_enabled = 1 ORDER BY position ASC LIMIT 1',
+      args: ['qr']
+    });
+    
+    if (result.rows.length > 0 && result.rows[0].qr_image_url) {
+      return result.rows[0].qr_image_url as string;
+    }
+    
+    // Return empty string if no QR image found
+    return '';
+  } catch (error) {
+    console.error('Error fetching QR payment image:', error);
+    return '';
+  }
+}
+
+// Get contact info for QR payment
+export async function getQRPaymentContactInfo(): Promise<string> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT contact_info FROM payment_settings WHERE payment_type = ? AND is_enabled = 1 ORDER BY position ASC LIMIT 1',
+      args: ['qr']
+    });
+    
+    if (result.rows.length > 0 && result.rows[0].contact_info) {
+      return result.rows[0].contact_info as string;
+    }
+    
+    // Return default message if no contact info found
+    return 'Contact administrator for support';
+  } catch (error) {
+    console.error('Error fetching QR payment contact info:', error);
+    return 'Contact administrator for support';
   }
 }
 

@@ -577,6 +577,7 @@ const FileCategory = styled.span`
   color: var(--text-accent);
 `;
 
+// Remove the Support Me button styles
 const RefreshButton = styled.button`
   background-color: #10b981; /* Green color similar to the screenshot */
   color: white;
@@ -629,6 +630,10 @@ const AdminSidebar = () => {
         <MenuItem to="/admin/subscribers">
           <MenuIcon>📧</MenuIcon>
           <MenuLabel>Subscribers</MenuLabel>
+        </MenuItem>
+        <MenuItem to="/admin/payment-settings">
+          <MenuIcon>💰</MenuIcon>
+          <MenuLabel>Payment Settings</MenuLabel>
         </MenuItem>
         <MenuItem to="/admin/stats">
           <MenuIcon>📈</MenuIcon>

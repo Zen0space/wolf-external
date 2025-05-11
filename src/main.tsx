@@ -11,6 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminDashboard from './pages/admin/Dashboard.tsx'
 import AdminLogin from './pages/admin/Login.tsx'
 import AdminSignup from './pages/admin/Signup.tsx'
+import PaymentSettings from './pages/admin/PaymentSettings.tsx'
 
 import './index.css'
 import './theme/theme.css'
@@ -43,6 +44,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* New Payment Settings Page */}
+            <Route 
+              path="/admin/payment-settings" 
+              element={
+                <ProtectedRoute>
+                  <PaymentSettings />
                 </ProtectedRoute>
               } 
             />
