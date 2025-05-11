@@ -1,6 +1,7 @@
 import { createClient } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
+import { nanoid } from 'nanoid';
 
 // Database client
 const client = createClient({
@@ -167,6 +168,37 @@ export interface PaymentSetting {
   contactInfo: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Interface for support ticket
+export interface SupportTicket {
+  id?: string;
+  name: string;
+  email: string;
+  subject: string;
+  category: string;
+  message: string;
+  status?: string;
+  createdAt?: string;
+  createdAtISO?: string;
+  updatedAt?: string;
+  updatedAtISO?: string;
+  screenshot?: {
+    file: File;
+    name: string;
+    type: string;
+    size: number;
+  } | null;
+}
+
+// Interface for support reply
+export interface SupportReply {
+  id?: string;
+  ticketId: string;
+  message: string;
+  isAdmin: boolean;
+  createdAt?: string;
+  createdAtISO?: string;
 }
 
 // Get available categories
@@ -929,6 +961,288 @@ export async function getQRPaymentContactInfo(): Promise<string> {
   } catch (error) {
     console.error('Error fetching QR payment contact info:', error);
     return 'Contact administrator for support';
+  }
+}
+
+// Create a new support ticket
+export async function createSupportTicket(ticketData: SupportTicket): Promise<string> {
+  const ticketId = nanoid();
+  const now = new Date().toISOString();
+
+  try {
+    // Begin transaction
+    await client.execute('BEGIN TRANSACTION');
+
+    // Insert ticket
+    await client.execute(
+      `INSERT INTO support_tickets (id, name, email, subject, category, message, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [ticketId, ticketData.name, ticketData.email, ticketData.subject, ticketData.category, ticketData.message, now, now]
+    );
+
+    // If there's a screenshot, insert it
+    if (ticketData.screenshot) {
+      const screenshotId = nanoid();
+      const fileBuffer = await ticketData.screenshot.file.arrayBuffer();
+
+      await client.execute(
+        `INSERT INTO support_ticket_screenshots (id, ticket_id, file_name, file_type, file_size, content, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          screenshotId,
+          ticketId,
+          ticketData.screenshot.name,
+          ticketData.screenshot.type,
+          ticketData.screenshot.size,
+          Buffer.from(fileBuffer),
+          now
+        ]
+      );
+    }
+
+    // Commit transaction
+    await client.execute('COMMIT');
+
+    return ticketId;
+  } catch (error) {
+    // Rollback on error
+    await client.execute('ROLLBACK');
+    throw error;
+  }
+}
+
+// Get support tickets
+export async function getSupportTickets(status?: string): Promise<SupportTicket[]> {
+  try {
+    let sql = `
+      SELECT id, name, email, subject, category, message, status, created_at, updated_at
+      FROM support_tickets
+    `;
+    
+    const args: any[] = [];
+    
+    if (status) {
+      sql += ' WHERE status = ?';
+      args.push(status);
+    }
+    
+    sql += ' ORDER BY created_at DESC';
+    
+    const result = await client.execute({
+      sql,
+      args
+    });
+    
+    return result.rows.map((row: any) => {
+      const createdAt = row.created_at as string;
+      const updatedAt = row.updated_at as string;
+      const { formattedTime: createdAtFormatted, isoTimestamp: createdAtISO } = formatMalaysiaTime(createdAt);
+      const { formattedTime: updatedAtFormatted, isoTimestamp: updatedAtISO } = formatMalaysiaTime(updatedAt);
+      
+      return {
+        id: row.id as string,
+        name: row.name as string,
+        email: row.email as string,
+        subject: row.subject as string,
+        category: row.category as string,
+        message: row.message as string,
+        status: row.status as string,
+        createdAt: createdAtFormatted,
+        createdAtISO,
+        updatedAt: updatedAtFormatted,
+        updatedAtISO
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching support tickets:', error);
+    throw error;
+  }
+}
+
+// Get a single support ticket by ID
+export async function getSupportTicket(ticketId: string): Promise<SupportTicket | null> {
+  try {
+    const result = await client.execute({
+      sql: `
+        SELECT id, name, email, subject, category, message, status, created_at, updated_at
+        FROM support_tickets
+        WHERE id = ?
+      `,
+      args: [ticketId]
+    });
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+    
+    const row = result.rows[0];
+    const createdAt = row.created_at as string;
+    const updatedAt = row.updated_at as string;
+    const { formattedTime: createdAtFormatted, isoTimestamp: createdAtISO } = formatMalaysiaTime(createdAt);
+    const { formattedTime: updatedAtFormatted, isoTimestamp: updatedAtISO } = formatMalaysiaTime(updatedAt);
+    
+    // Get screenshot if exists
+    const screenshot = await client.execute({
+      sql: `
+        SELECT id, file_name, file_type, file_size
+        FROM support_ticket_screenshots
+        WHERE ticket_id = ?
+      `,
+      args: [ticketId]
+    });
+
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      email: row.email as string,
+      subject: row.subject as string,
+      category: row.category as string,
+      message: row.message as string,
+      status: row.status as string,
+      createdAt: createdAtFormatted,
+      createdAtISO,
+      updatedAt: updatedAtFormatted,
+      updatedAtISO,
+      screenshot: screenshot.rows.length > 0 ? {
+        file: new File([screenshot.rows[0].content as Uint8Array], screenshot.rows[0].file_name as string),
+        name: screenshot.rows[0].file_name as string,
+        type: screenshot.rows[0].file_type as string,
+        size: Number(screenshot.rows[0].file_size)
+      } : null
+    };
+  } catch (error) {
+    console.error('Error fetching support ticket:', error);
+    throw error;
+  }
+}
+
+// Update support ticket status
+export async function updateSupportTicketStatus(id: string, status: string): Promise<boolean> {
+  try {
+    const localTime = getMalaysiaTimeISO();
+    
+    const result = await client.execute({
+      sql: `
+        UPDATE support_tickets
+        SET status = ?, updated_at = ?
+        WHERE id = ?
+      `,
+      args: [status, localTime, id]
+    });
+    
+    return result.rowsAffected > 0;
+  } catch (error) {
+    console.error('Error updating support ticket status:', error);
+    throw error;
+  }
+}
+
+// Add a reply to a support ticket
+export async function addSupportReply(reply: SupportReply): Promise<string> {
+  try {
+    const replyId = reply.id || uuidv4();
+    const localTime = getMalaysiaTimeISO();
+    
+    await client.execute({
+      sql: `
+        INSERT INTO support_replies (
+          id, ticket_id, message, is_admin, created_at
+        ) VALUES (?, ?, ?, ?, ?)
+      `,
+      args: [
+        replyId,
+        reply.ticketId,
+        reply.message,
+        reply.isAdmin ? 1 : 0,
+        localTime
+      ]
+    });
+    
+    // Update the ticket's updated_at timestamp
+    await client.execute({
+      sql: `
+        UPDATE support_tickets
+        SET updated_at = ?
+        WHERE id = ?
+      `,
+      args: [localTime, reply.ticketId]
+    });
+    
+    return replyId;
+  } catch (error) {
+    console.error('Error adding support reply:', error);
+    throw error;
+  }
+}
+
+// Get replies for a support ticket
+export async function getSupportReplies(ticketId: string): Promise<SupportReply[]> {
+  try {
+    const result = await client.execute({
+      sql: `
+        SELECT id, ticket_id, message, is_admin, created_at
+        FROM support_replies
+        WHERE ticket_id = ?
+        ORDER BY created_at ASC
+      `,
+      args: [ticketId]
+    });
+    
+    return result.rows.map((row: any) => {
+      const createdAt = row.created_at as string;
+      const { formattedTime: createdAtFormatted, isoTimestamp: createdAtISO } = formatMalaysiaTime(createdAt);
+      
+      return {
+        id: row.id as string,
+        ticketId: row.ticket_id as string,
+        message: row.message as string,
+        isAdmin: Boolean(row.is_admin),
+        createdAt: createdAtFormatted,
+        createdAtISO
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching support replies:', error);
+    throw error;
+  }
+}
+
+// Get support categories
+export async function getSupportCategories(): Promise<any[]> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT * FROM support_categories ORDER BY name',
+    });
+    return result.rows;
+  } catch (error) {
+    console.error('Error fetching support categories:', error);
+    throw error;
+  }
+}
+
+// Get total support tickets count
+export async function getSupportTicketsCount(): Promise<number> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM support_tickets'
+    });
+    return result.rows[0].count as number;
+  } catch (error) {
+    console.error('Error counting support tickets:', error);
+    throw error;
+  }
+}
+
+// Get open support tickets count
+export async function getOpenSupportTicketsCount(): Promise<number> {
+  try {
+    const result = await client.execute({
+      sql: "SELECT COUNT(*) as count FROM support_tickets WHERE status = 'open'"
+    });
+    return result.rows[0].count as number;
+  } catch (error) {
+    console.error('Error counting open support tickets:', error);
+    throw error;
   }
 }
 

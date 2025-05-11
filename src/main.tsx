@@ -2,7 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.tsx'
-import Scripts from './pages/Scripts.tsx'
+import Scripts from './pages/scripts/Scripts.tsx'
+import Support from './pages/support/support.tsx'
 import { ThemeProvider } from './theme/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -33,6 +34,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               </ProtectedRoute>
             } />
             <Route path="/scripts" element={<Scripts />} />
+            <Route path="/support" element={<Support />} />
             
             {/* Admin authentication routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

@@ -218,48 +218,50 @@ const Navbar: FC<NavbarProps> = ({ onDownloadClick }) => {
           }} />
         </Link>
         <Link 
-          to="#windows" 
+          to="#feedback" 
           style={{
             ...StyledNavbar.navLink,
-            ...(hoveredLink === 'windows' ? StyledNavbar.navLinkHover : {})
+            ...(hoveredLink === 'feedback' ? StyledNavbar.navLinkHover : {})
           }}
-          onMouseEnter={() => setHoveredLink('windows')}
+          onMouseEnter={() => setHoveredLink('feedback')}
           onMouseLeave={() => setHoveredLink(null)}
         >
-          Windows
+          Feedback
           <div style={{
             ...StyledNavbar.navLinkUnderline,
-            ...(hoveredLink === 'windows' ? StyledNavbar.navLinkUnderlineActive : {})
+            ...(hoveredLink === 'feedback' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
         </Link>
         <Link 
-          to="#adobe" 
+          to="/support" 
           style={{
             ...StyledNavbar.navLink,
-            ...(hoveredLink === 'adobe' ? StyledNavbar.navLinkHover : {})
+            ...(hoveredLink === 'support' ? StyledNavbar.navLinkHover : {})
           }}
-          onMouseEnter={() => setHoveredLink('adobe')}
+          onMouseEnter={() => setHoveredLink('support')}
           onMouseLeave={() => setHoveredLink(null)}
         >
-          Adobe
+          Support
           <div style={{
             ...StyledNavbar.navLinkUnderline,
-            ...(hoveredLink === 'adobe' ? StyledNavbar.navLinkUnderlineActive : {})
+            ...(hoveredLink === 'support' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
         </Link>
         <Link 
-          to="#tools" 
+          to="https://wolfscripts.com" 
+          target="_blank"
+          rel="noopener noreferrer"
           style={{
             ...StyledNavbar.navLink,
-            ...(hoveredLink === 'tools' ? StyledNavbar.navLinkHover : {})
+            ...(hoveredLink === 'website' ? StyledNavbar.navLinkHover : {})
           }}
-          onMouseEnter={() => setHoveredLink('tools')}
+          onMouseEnter={() => setHoveredLink('website')}
           onMouseLeave={() => setHoveredLink(null)}
         >
-          Tools
+          Website
           <div style={{
             ...StyledNavbar.navLinkUnderline,
-            ...(hoveredLink === 'tools' ? StyledNavbar.navLinkUnderlineActive : {})
+            ...(hoveredLink === 'website' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
         </Link>
       </div>

@@ -1,0 +1,235 @@
+/* Support Page Styles */
+.supportContainer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.supportContent {
+  flex: 1;
+  width: 100%;
+}
+
+.supportTitle {
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.supportDescription {
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto 2rem auto;
+}
+
+.supportForm {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.formColumn {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formColumn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.leftColumn {
+  border-radius: 8px;
+}
+
+.rightColumn {
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.inputLabel {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.required {
+  color: var(--error-color, #ff4c4c);
+}
+
+.inputField,
+.selectField,
+.textareaField {
+  width: 100%;
+  background-color: var(--background-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.inputField:focus,
+.selectField:focus,
+.textareaField:focus {
+  border-color: var(--btn-primary-bg);
+  box-shadow: 0 0 0 2px rgba(var(--btn-primary-bg-rgb, 0, 120, 212), 0.2);
+  outline: none;
+}
+
+.inputField:disabled,
+.selectField:disabled,
+.textareaField:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.selectField {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1em;
+  padding-right: 2.5rem;
+}
+
+.textareaField {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.fileUpload {
+  width: 100%;
+}
+
+.uploadButton {
+  width: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px dashed var(--border-color);
+}
+
+.uploadButton:hover {
+  border-color: var(--btn-primary-bg);
+  background-color: var(--background-hover);
+}
+
+.uploadButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.previewContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.imagePreview {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.removeButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--error-color, #ff4c4c);
+  color: white;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.removeButton:hover {
+  background-color: var(--error-color-dark, #e03131);
+  transform: scale(1.1);
+}
+
+.uploadPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.submitButton {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--btn-primary-hover, rgba(var(--btn-primary-bg-rgb, 0, 120, 212), 0.9));
+  transform: translateY(-1px);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.statusSuccess {
+  background-color: rgba(0, 216, 122, 0.1);
+  color: var(--success-color, #00d87a);
+  border: 1px solid rgba(0, 216, 122, 0.3);
+}
+
+.statusError {
+  background-color: rgba(255, 76, 76, 0.1);
+  color: var(--error-color, #ff4c4c);
+  border: 1px solid rgba(255, 76, 76, 0.3);
+}
+
+.contactInfo {
+  margin-top: 2rem;
+  color: var(--text-secondary);
+}
+
+.contactLink {
+  color: var(--btn-primary-bg);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.contactLink:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .supportForm {
+    grid-template-columns: 1fr;
+  }
+  
+  .leftColumn,
+  .rightColumn {
+    margin-bottom: 1.5rem;
+  }
+} 

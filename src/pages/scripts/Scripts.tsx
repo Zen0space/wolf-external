@@ -1,10 +1,11 @@
 import type { FC, CSSProperties } from 'react';
 import { useState, useEffect } from 'react';
-import { useTheme } from '../theme/ThemeContext';
-import '../theme/theme.css';
-import SupportMe from '../components/SupportMe';
+import { useTheme } from '../../theme/ThemeContext';
+import '../../theme/theme.css';
+import SupportMe from '../../components/SupportMe';
+import Navbar from '../../components/Navbar';
 
-import { getFiles, getCategories, getDownloadCount, getFile, saveEmailSubscriber, type FileInfo } from '../lib/db';
+import { getFiles, getCategories, getDownloadCount, getFile, saveEmailSubscriber, type FileInfo } from '../../lib/db';
 
 // Define the CategoryInfo interface
 interface CategoryInfo {
@@ -511,8 +512,23 @@ const Scripts: FC = () => {
     }
   };
 
+  // Handle the download button click from navbar
+  const handleNavbarDownload = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+    // Focus on the search input after a short delay
+    setTimeout(() => {
+      const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+      if (searchInput) searchInput.focus();
+    }, 500);
+  };
+
   return (
     <div style={StyledScripts.container} data-theme={theme}>
+      <Navbar onDownloadClick={handleNavbarDownload} />
+      
       <div style={StyledScripts.header}>
         <h1 style={StyledScripts.title}>Available Scripts</h1>
         <p style={StyledScripts.subtitle}>Download useful scripts and tools for your system</p>
