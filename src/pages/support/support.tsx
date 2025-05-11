@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import '../../theme/theme.css';
 import Navbar from '../../components/Navbar';
 import { createSupportTicket } from '../../lib/db';
@@ -134,6 +134,11 @@ const styles = {
       opacity: 0.7,
       cursor: 'not-allowed'
     }
+  },
+  selectOption: {
+    backgroundColor: 'var(--background-paper)',
+    color: 'var(--text-primary)',
+    padding: '10px',
   },
   selectIcon: {
     position: 'absolute' as const,
@@ -408,6 +413,29 @@ const Support: FC = () => {
     }
   };
 
+  // Custom styles for the dropdown options
+  useEffect(() => {
+    // Add custom styles to fix dropdown option colors
+    const style = document.createElement('style');
+    style.textContent = `
+      select.support-select option {
+        background-color: var(--background-paper);
+        color: var(--text-primary);
+        padding: 10px;
+      }
+      
+      select.support-select {
+        color: var(--text-primary) !important;
+        background-color: var(--background-main) !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
     <div style={styles.supportContainer}>
       <Navbar />
@@ -488,6 +516,7 @@ const Support: FC = () => {
                     onChange={handleChange}
                     style={styles.selectField}
                     disabled={isSubmitting}
+                    className="support-select"
                   >
                     <option value="general">General Question</option>
                     <option value="technical">Technical Support</option>
@@ -583,10 +612,10 @@ const Support: FC = () => {
           <div style={styles.contactInfo}>
             You can also reach us directly at:{' '}
             <a 
-              href="mailto:support@wolfscripts.com" 
+              href="mailto:kairul@zen0.space" 
               style={styles.contactLink}
             >
-              support@wolfscripts.com
+              kairul@zen0.space
             </a>
           </div>
         </div>
