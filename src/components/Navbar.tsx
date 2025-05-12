@@ -141,6 +141,20 @@ const applyMediaStyles = (isMobile: boolean): Record<string, CSSProperties> => {
   };
 };
 
+// Add a simple badge style
+const comingSoonBadge: CSSProperties = {
+  background: '#ffb347',
+  color: '#222',
+  fontSize: '0.7rem',
+  fontWeight: 600,
+  borderRadius: '6px',
+  padding: '2px 7px',
+  marginLeft: '8px',
+  letterSpacing: '0.03em',
+  verticalAlign: 'middle',
+  display: 'inline-block',
+};
+
 interface NavbarProps {
   onDownloadClick?: () => void;
 }
@@ -217,21 +231,27 @@ const Navbar: FC<NavbarProps> = ({ onDownloadClick }) => {
             ...(hoveredLink === 'scripts' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
         </Link>
-        <Link 
-          to="#feedback" 
+        <span
           style={{
             ...StyledNavbar.navLink,
-            ...(hoveredLink === 'feedback' ? StyledNavbar.navLinkHover : {})
+            cursor: 'not-allowed',
+            opacity: 0.7,
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
           }}
           onMouseEnter={() => setHoveredLink('feedback')}
           onMouseLeave={() => setHoveredLink(null)}
+          tabIndex={-1}
+          aria-disabled="true"
         >
           Feedback
+          <span style={comingSoonBadge}>Coming Soon</span>
           <div style={{
             ...StyledNavbar.navLinkUnderline,
             ...(hoveredLink === 'feedback' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
-        </Link>
+        </span>
         <Link 
           to="/support" 
           style={{
@@ -247,23 +267,27 @@ const Navbar: FC<NavbarProps> = ({ onDownloadClick }) => {
             ...(hoveredLink === 'support' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
         </Link>
-        <Link 
-          to="https://wolfscripts.com" 
-          target="_blank"
-          rel="noopener noreferrer"
+        <span
           style={{
             ...StyledNavbar.navLink,
-            ...(hoveredLink === 'website' ? StyledNavbar.navLinkHover : {})
+            cursor: 'not-allowed',
+            opacity: 0.7,
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
           }}
           onMouseEnter={() => setHoveredLink('website')}
           onMouseLeave={() => setHoveredLink(null)}
+          tabIndex={-1}
+          aria-disabled="true"
         >
           Website
+          <span style={comingSoonBadge}>Coming Soon</span>
           <div style={{
             ...StyledNavbar.navLinkUnderline,
             ...(hoveredLink === 'website' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
-        </Link>
+        </span>
       </div>
       <div style={StyledNavbar.navActions}>
         <button 
