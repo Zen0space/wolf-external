@@ -13,6 +13,7 @@ import AdminDashboard from './pages/admin/Dashboard.tsx'
 import AdminLogin from './pages/admin/Login.tsx'
 import AdminSignup from './pages/admin/Signup.tsx'
 import PaymentSettings from './pages/admin/PaymentSettings.tsx'
+import AdminSupport from './pages/admin/support.tsx'
 
 import './index.css'
 import './theme/theme.css'
@@ -50,7 +51,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               } 
             />
             
-            {/* New Payment Settings Page */}
+            {/* Support tickets route */}
+            <Route 
+              path="/admin/support" 
+              element={
+                <ProtectedRoute>
+                  <AdminSupport />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Payment Settings Page */}
             <Route 
               path="/admin/payment-settings" 
               element={

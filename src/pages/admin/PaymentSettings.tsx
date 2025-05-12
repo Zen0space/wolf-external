@@ -1,125 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../theme/ThemeContext';
+import AdminLayout from '../../components/AdminLayout';
 import { getPaymentSettings, savePaymentSetting, deletePaymentSetting } from '../../lib/db';
 import type { PaymentSetting } from '../../lib/db';
 import '../../theme/theme.css';
 
 // Styled Components
-const PageContainer = styled.div`
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-  background: var(--background-main);
-  color: var(--text-primary);
-`;
-
-const Sidebar = styled.div`
-  width: 260px;
-  background-color: #24262f;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 1.5rem 0;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-
-  @media (max-width: 768px) {
-    width: 70px;
-    padding: 1rem 0;
-  }
-`;
-
-const SidebarHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1.5rem;
-  margin-bottom: 2rem;
-`;
-
-const LogoIcon = styled.span`
-  font-size: 1.8rem;
-`;
-
-const LogoText = styled.span`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #4A90E2;
-  letter-spacing: -0.02em;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const SidebarMenu = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-`;
-
-const MenuItem = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-left: 3px solid transparent;
-  text-decoration: none;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-  }
-
-  &.active {
-    background-color: rgba(0, 216, 122, 0.1);
-    color: var(--text-primary);
-    border-left-color: var(--accent-color);
-  }
-
-  @media (max-width: 768px) {
-    padding: 0.75rem;
-    justify-content: center;
-  }
-`;
-
-const MenuIcon = styled.span`
-  font-size: 1.2rem;
-  width: 24px;
-  text-align: center;
-
-  @media (max-width: 768px) {
-    margin: 0;
-  }
-`;
-
-const MenuLabel = styled.span`
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const Content = styled.div`
-  flex: 1;
-  padding: 2rem;
-  margin-left: 260px;
-  max-width: 1200px;
-  margin: 0 auto 0 260px;
-
-  @media (max-width: 768px) {
-    margin-left: 70px;
-    padding: 1.5rem;
-  }
-`;
-
 const PageHeader = styled.div`
   margin-bottom: 2rem;
   text-align: center;
@@ -550,50 +438,7 @@ const StatusBadge = styled.span<{ $isActive: boolean }>`
   color: ${props => props.$isActive ? 'var(--accent-color)' : '#e53935'};
 `;
 
-// Admin Sidebar component
-const AdminSidebar = ({ active }: { active: string }) => {
-  return (
-    <Sidebar>
-      <SidebarHeader>
-        <LogoIcon>🐺</LogoIcon>
-        <LogoText>Wolf Admin</LogoText>
-      </SidebarHeader>
-      <SidebarMenu>
-        <MenuItem to="/admin/dashboard" className={active === 'dashboard' ? 'active' : ''}>
-          <MenuIcon>📊</MenuIcon>
-          <MenuLabel>Dashboard</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/files" className={active === 'files' ? 'active' : ''}>
-          <MenuIcon>📁</MenuIcon>
-          <MenuLabel>Files</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/categories" className={active === 'categories' ? 'active' : ''}>
-          <MenuIcon>🗂️</MenuIcon>
-          <MenuLabel>Categories</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/subscribers" className={active === 'subscribers' ? 'active' : ''}>
-          <MenuIcon>📧</MenuIcon>
-          <MenuLabel>Subscribers</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/payment-settings" className={active === 'payment-settings' ? 'active' : ''}>
-          <MenuIcon>💰</MenuIcon>
-          <MenuLabel>Payment Settings</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/stats" className={active === 'stats' ? 'active' : ''}>
-          <MenuIcon>📈</MenuIcon>
-          <MenuLabel>Statistics</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/settings" className={active === 'settings' ? 'active' : ''}>
-          <MenuIcon>⚙️</MenuIcon>
-          <MenuLabel>Settings</MenuLabel>
-        </MenuItem>
-      </SidebarMenu>
-    </Sidebar>
-  );
-};
-
 const PaymentSettings = () => {
-  const { theme } = useTheme();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -848,233 +693,230 @@ const PaymentSettings = () => {
   };
   
   return (
-    <PageContainer data-theme={theme}>
-      <AdminSidebar active="payment-settings" />
-      <Content>
-        <PageHeader>
-          <h1>Payment Settings</h1>
-          <p>Configure payment methods and options for users to support the project.</p>
-        </PageHeader>
-        
-        {error && (
-          <Card style={{ backgroundColor: 'rgba(229, 57, 53, 0.1)', marginBottom: '1rem' }}>
-            <p style={{ color: '#e53935', margin: 0 }}>{error}</p>
-          </Card>
-        )}
-        
-        <Card>
-          <CardHeader>
-            <h2>Payment Methods</h2>
-            <Button onClick={openAddModal}>Add Payment Method</Button>
-          </CardHeader>
-          
-          {isInitialLoading ? (
-            <p style={{ textAlign: 'center', padding: '2rem' }}>Loading payment settings...</p>
-          ) : (
-            <Table>
-              <TableHead>
-                <tr>
-                  <th style={{ width: '50px' }}>Icon</th>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </TableHead>
-              <TableBody>
-                {paymentSettings.map(setting => (
-                  <tr key={setting.id}>
-                    <td>{setting.icon}</td>
-                    <td>{setting.displayName}</td>
-                    <td style={{ textTransform: 'capitalize' }}>{setting.paymentType}</td>
-                    <td>{setting.description}</td>
-                    <td>
-                      <StatusBadge $isActive={setting.isEnabled}>
-                        {setting.isEnabled ? 'Active' : 'Disabled'}
-                      </StatusBadge>
-                    </td>
-                    <td>
-                      <Button 
-                        onClick={() => toggleStatus(setting.id)}
-                        style={{ 
-                          marginRight: '0.5rem',
-                          backgroundColor: setting.isEnabled ? '#e53935' : 'var(--accent-color)',
-                          minWidth: 'auto',
-                          padding: '0.25rem 0.5rem'
-                        }}
-                      >
-                        {setting.isEnabled ? 'Disable' : 'Enable'}
-                      </Button>
-                      <EditButton onClick={() => openEditModal(setting)}>Edit</EditButton>
-                      <DeleteButton onClick={() => handleDelete(setting.id)}>Delete</DeleteButton>
-                    </td>
-                  </tr>
-                ))}
-                
-                {paymentSettings.length === 0 && (
-                  <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
-                      No payment methods configured. Add your first one!
-                    </td>
-                  </tr>
-                )}
-              </TableBody>
-            </Table>
-          )}
+    <AdminLayout activePage="payment-settings">
+      <PageHeader>
+        <h1>Payment Settings</h1>
+        <p>Configure payment methods and options for users to support the project.</p>
+      </PageHeader>
+      
+      {error && (
+        <Card style={{ backgroundColor: 'rgba(229, 57, 53, 0.1)', marginBottom: '1rem' }}>
+          <p style={{ color: '#e53935', margin: 0 }}>{error}</p>
         </Card>
+      )}
+      
+      <Card>
+        <CardHeader>
+          <h2>Payment Methods</h2>
+          <Button onClick={openAddModal}>Add Payment Method</Button>
+        </CardHeader>
         
-        {isModalOpen && currentSetting && (
-          <Modal>
-            <ModalContent>
-              <CloseButton onClick={closeModal}>×</CloseButton>
-              <h2>{currentSetting.id ? 'Edit Payment Method' : 'Add Payment Method'}</h2>
+        {isInitialLoading ? (
+          <p style={{ textAlign: 'center', padding: '2rem' }}>Loading payment settings...</p>
+        ) : (
+          <Table>
+            <TableHead>
+              <tr>
+                <th style={{ width: '50px' }}>Icon</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </TableHead>
+            <TableBody>
+              {paymentSettings.map(setting => (
+                <tr key={setting.id}>
+                  <td>{setting.icon}</td>
+                  <td>{setting.displayName}</td>
+                  <td style={{ textTransform: 'capitalize' }}>{setting.paymentType}</td>
+                  <td>{setting.description}</td>
+                  <td>
+                    <StatusBadge $isActive={setting.isEnabled}>
+                      {setting.isEnabled ? 'Active' : 'Disabled'}
+                    </StatusBadge>
+                  </td>
+                  <td>
+                    <Button 
+                      onClick={() => toggleStatus(setting.id)}
+                      style={{ 
+                        marginRight: '0.5rem',
+                        backgroundColor: setting.isEnabled ? '#e53935' : 'var(--accent-color)',
+                        minWidth: 'auto',
+                        padding: '0.25rem 0.5rem'
+                      }}
+                    >
+                      {setting.isEnabled ? 'Disable' : 'Enable'}
+                    </Button>
+                    <EditButton onClick={() => openEditModal(setting)}>Edit</EditButton>
+                    <DeleteButton onClick={() => handleDelete(setting.id)}>Delete</DeleteButton>
+                  </td>
+                </tr>
+              ))}
               
-              <FormRow>
-                <Label htmlFor="isEnabled">Status</Label>
-                <Checkbox>
-                  <input 
-                    type="checkbox" 
-                    id="isEnabled" 
-                    name="isEnabled" 
-                    checked={currentSetting.isEnabled} 
-                    onChange={handleCheckboxChange} 
-                  />
-                  <span>{currentSetting.isEnabled ? 'Active' : 'Disabled'}</span>
-                </Checkbox>
-              </FormRow>
-              
-              <FormRow>
-                <Label htmlFor="paymentType">Payment Type</Label>
-                <Select 
-                  id="paymentType" 
-                  name="paymentType" 
-                  value={currentSetting.paymentType} 
-                  onChange={handleChange}
-                >
-                  <option value="qr">QR Code Payment</option>
-                  <option value="kofi">Ko-fi</option>
-                  <option value="paypal">PayPal</option>
-                  <option value="patreon">Patreon</option>
-                  <option value="custom">Custom</option>
-                </Select>
-              </FormRow>
-              
-              <FormRow>
-                <Label htmlFor="displayName">Display Name</Label>
-                <Input 
-                  type="text" 
-                  id="displayName" 
-                  name="displayName" 
-                  value={currentSetting.displayName} 
-                  onChange={handleChange} 
-                  placeholder="E.g. QR Payment, PayPal, etc." 
-                  required 
-                />
-              </FormRow>
-              
-              <FormRow>
-                <Label htmlFor="description">Description</Label>
-                <Input 
-                  type="text" 
-                  id="description" 
-                  name="description" 
-                  value={currentSetting.description} 
-                  onChange={handleChange} 
-                  placeholder="Short description of the payment method" 
-                />
-              </FormRow>
-              
-              <FormRow>
-                <Label htmlFor="icon">Icon (Emoji)</Label>
-                <Input 
-                  type="text" 
-                  id="icon" 
-                  name="icon" 
-                  value={currentSetting.icon} 
-                  onChange={handleChange} 
-                  placeholder="Enter an emoji: 💰, 💸, 💳, etc." 
-                  maxLength={2}
-                />
-                <IconPreview>
-                  <span>Preview: </span>
-                  <span>{currentSetting.icon}</span>
-                </IconPreview>
-              </FormRow>
-              
-              <FormRow>
-                <Label htmlFor="position">Position Order</Label>
-                <Input 
-                  type="number" 
-                  id="position" 
-                  name="position" 
-                  value={currentSetting.position} 
-                  onChange={handleChange} 
-                  min="1" 
-                />
-              </FormRow>
-              
-              {currentSetting.paymentType === 'qr' && (
-                <FormRow>
-                  <Label htmlFor="qrImageUrl">QR Code Image</Label>
-                  <FileUploadContainer>
-                    <input 
-                      type="file" 
-                      id="qrImage" 
-                      name="qrImage" 
-                      accept="image/jpeg,image/png" 
-                      onChange={handleQrImageChange}
-                    />
-                    <span className="upload-icon">📸</span>
-                    <span className="upload-text">Click to upload QR code image</span>
-                  </FileUploadContainer>
-                  {qrImagePreview && (
-                    <QRPreview>
-                      <img src={qrImagePreview} alt="QR Code Preview" />
-                    </QRPreview>
-                  )}
-                </FormRow>
+              {paymentSettings.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
+                    No payment methods configured. Add your first one!
+                  </td>
+                </tr>
               )}
-              
-              {currentSetting.paymentType !== 'qr' && (
-                <FormRow>
-                  <Label htmlFor="paymentLink">Payment Link</Label>
-                  <Input 
-                    type="text" 
-                    id="paymentLink" 
-                    name="paymentLink" 
-                    value={currentSetting.paymentLink} 
-                    onChange={handleChange} 
-                    placeholder="https://example.com/payment" 
-                  />
-                </FormRow>
-              )}
-              
-              <FormRow>
-                <Label htmlFor="contactInfo">Contact Information After Payment</Label>
-                <Textarea 
-                  id="contactInfo" 
-                  name="contactInfo" 
-                  value={currentSetting.contactInfo} 
-                  onChange={handleChange} 
-                  placeholder="Instructions for contacting you after payment" 
-                />
-              </FormRow>
-              
-              <ButtonGroup>
-                <CancelButton onClick={closeModal}>Cancel</CancelButton>
-                <SaveButton onClick={handleSave} disabled={isLoading} style={{ marginRight: '8px' }}>
-                  {isLoading ? 'Saving...' : 'Save Only'}
-                </SaveButton>
-                <SaveButton onClick={handleSaveAndApply} disabled={isLoading} style={{ backgroundColor: '#10b981' }}>
-                  {isLoading ? 'Applying...' : 'Save & Apply'}
-                </SaveButton>
-              </ButtonGroup>
-            </ModalContent>
-          </Modal>
+            </TableBody>
+          </Table>
         )}
-      </Content>
-    </PageContainer>
+      </Card>
+      
+      {isModalOpen && currentSetting && (
+        <Modal>
+          <ModalContent>
+            <CloseButton onClick={closeModal}>×</CloseButton>
+            <h2>{currentSetting.id ? 'Edit Payment Method' : 'Add Payment Method'}</h2>
+            
+            <FormRow>
+              <Label htmlFor="isEnabled">Status</Label>
+              <Checkbox>
+                <input 
+                  type="checkbox" 
+                  id="isEnabled" 
+                  name="isEnabled" 
+                  checked={currentSetting.isEnabled} 
+                  onChange={handleCheckboxChange} 
+                />
+                <span>{currentSetting.isEnabled ? 'Active' : 'Disabled'}</span>
+              </Checkbox>
+            </FormRow>
+            
+            <FormRow>
+              <Label htmlFor="paymentType">Payment Type</Label>
+              <Select 
+                id="paymentType" 
+                name="paymentType" 
+                value={currentSetting.paymentType} 
+                onChange={handleChange}
+              >
+                <option value="qr">QR Code Payment</option>
+                <option value="kofi">Ko-fi</option>
+                <option value="paypal">PayPal</option>
+                <option value="patreon">Patreon</option>
+                <option value="custom">Custom</option>
+              </Select>
+            </FormRow>
+            
+            <FormRow>
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input 
+                type="text" 
+                id="displayName" 
+                name="displayName" 
+                value={currentSetting.displayName} 
+                onChange={handleChange} 
+                placeholder="E.g. QR Payment, PayPal, etc." 
+                required 
+              />
+            </FormRow>
+            
+            <FormRow>
+              <Label htmlFor="description">Description</Label>
+              <Input 
+                type="text" 
+                id="description" 
+                name="description" 
+                value={currentSetting.description} 
+                onChange={handleChange} 
+                placeholder="Short description of the payment method" 
+              />
+            </FormRow>
+            
+            <FormRow>
+              <Label htmlFor="icon">Icon (Emoji)</Label>
+              <Input 
+                type="text" 
+                id="icon" 
+                name="icon" 
+                value={currentSetting.icon} 
+                onChange={handleChange} 
+                placeholder="Enter an emoji: 💰, 💸, 💳, etc." 
+                maxLength={2}
+              />
+              <IconPreview>
+                <span>Preview: </span>
+                <span>{currentSetting.icon}</span>
+              </IconPreview>
+            </FormRow>
+            
+            <FormRow>
+              <Label htmlFor="position">Position Order</Label>
+              <Input 
+                type="number" 
+                id="position" 
+                name="position" 
+                value={currentSetting.position} 
+                onChange={handleChange} 
+                min="1" 
+              />
+            </FormRow>
+            
+            {currentSetting.paymentType === 'qr' && (
+              <FormRow>
+                <Label htmlFor="qrImageUrl">QR Code Image</Label>
+                <FileUploadContainer>
+                  <input 
+                    type="file" 
+                    id="qrImage" 
+                    name="qrImage" 
+                    accept="image/jpeg,image/png" 
+                    onChange={handleQrImageChange}
+                  />
+                  <span className="upload-icon">📸</span>
+                  <span className="upload-text">Click to upload QR code image</span>
+                </FileUploadContainer>
+                {qrImagePreview && (
+                  <QRPreview>
+                    <img src={qrImagePreview} alt="QR Code Preview" />
+                  </QRPreview>
+                )}
+              </FormRow>
+            )}
+            
+            {currentSetting.paymentType !== 'qr' && (
+              <FormRow>
+                <Label htmlFor="paymentLink">Payment Link</Label>
+                <Input 
+                  type="text" 
+                  id="paymentLink" 
+                  name="paymentLink" 
+                  value={currentSetting.paymentLink} 
+                  onChange={handleChange} 
+                  placeholder="https://example.com/payment" 
+                />
+              </FormRow>
+            )}
+            
+            <FormRow>
+              <Label htmlFor="contactInfo">Contact Information After Payment</Label>
+              <Textarea 
+                id="contactInfo" 
+                name="contactInfo" 
+                value={currentSetting.contactInfo} 
+                onChange={handleChange} 
+                placeholder="Instructions for contacting you after payment" 
+              />
+            </FormRow>
+            
+            <ButtonGroup>
+              <CancelButton onClick={closeModal}>Cancel</CancelButton>
+              <SaveButton onClick={handleSave} disabled={isLoading} style={{ marginRight: '8px' }}>
+                {isLoading ? 'Saving...' : 'Save Only'}
+              </SaveButton>
+              <SaveButton onClick={handleSaveAndApply} disabled={isLoading} style={{ backgroundColor: '#10b981' }}>
+                {isLoading ? 'Applying...' : 'Save & Apply'}
+              </SaveButton>
+            </ButtonGroup>
+          </ModalContent>
+        </Modal>
+      )}
+    </AdminLayout>
   );
 };
 

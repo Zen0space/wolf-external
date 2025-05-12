@@ -967,46 +967,56 @@ export async function getQRPaymentContactInfo(): Promise<string> {
 // Create a new support ticket
 export async function createSupportTicket(ticketData: SupportTicket): Promise<string> {
   const ticketId = nanoid();
-  const now = new Date().toISOString();
+  const now = getMalaysiaTimeISO(); // Use consistent time format
 
   try {
-    // Begin transaction
-    await client.execute('BEGIN TRANSACTION');
-
-    // Insert ticket
-    await client.execute(
-      `INSERT INTO support_tickets (id, name, email, subject, category, message, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [ticketId, ticketData.name, ticketData.email, ticketData.subject, ticketData.category, ticketData.message, now, now]
-    );
+    // Insert ticket without using transactions
+    await client.execute({
+      sql: `INSERT INTO support_tickets (id, name, email, subject, category, message, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        ticketId, 
+        ticketData.name, 
+        ticketData.email, 
+        ticketData.subject, 
+        ticketData.category, 
+        ticketData.message, 
+        'open', // explicitly set status
+        now, 
+        now
+      ]
+    });
 
     // If there's a screenshot, insert it
-    if (ticketData.screenshot) {
-      const screenshotId = nanoid();
-      const fileBuffer = await ticketData.screenshot.file.arrayBuffer();
+    if (ticketData.screenshot && ticketData.screenshot.file) {
+      try {
+        const screenshotId = nanoid();
+        // Convert File to ArrayBuffer
+        const fileBuffer = await ticketData.screenshot.file.arrayBuffer();
+        const base64Content = arrayBufferToBase64(fileBuffer);
 
-      await client.execute(
-        `INSERT INTO support_ticket_screenshots (id, ticket_id, file_name, file_type, file_size, content, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          screenshotId,
-          ticketId,
-          ticketData.screenshot.name,
-          ticketData.screenshot.type,
-          ticketData.screenshot.size,
-          Buffer.from(fileBuffer),
-          now
-        ]
-      );
+        await client.execute({
+          sql: `INSERT INTO support_ticket_screenshots (id, ticket_id, file_name, file_type, file_size, content, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            screenshotId,
+            ticketId,
+            ticketData.screenshot.name,
+            ticketData.screenshot.type,
+            ticketData.screenshot.size,
+            base64Content,
+            now
+          ]
+        });
+      } catch (screenshotError) {
+        console.error('Error saving screenshot:', screenshotError);
+        // Continue without the screenshot if there's an error
+      }
     }
-
-    // Commit transaction
-    await client.execute('COMMIT');
 
     return ticketId;
   } catch (error) {
-    // Rollback on error
-    await client.execute('ROLLBACK');
+    console.error('Error creating support ticket:', error);
     throw error;
   }
 }
@@ -1242,6 +1252,45 @@ export async function getOpenSupportTicketsCount(): Promise<number> {
     return result.rows[0].count as number;
   } catch (error) {
     console.error('Error counting open support tickets:', error);
+    throw error;
+  }
+}
+
+// Get support tickets by email
+export async function getSupportTicketsByEmail(email: string): Promise<SupportTicket[]> {
+  try {
+    const result = await client.execute({
+      sql: `
+        SELECT id, name, email, subject, category, message, status, created_at, updated_at
+        FROM support_tickets
+        WHERE email = ?
+        ORDER BY created_at DESC
+      `,
+      args: [email]
+    });
+    
+    return result.rows.map((row: any) => {
+      const createdAt = row.created_at as string;
+      const updatedAt = row.updated_at as string;
+      const { formattedTime: createdAtFormatted, isoTimestamp: createdAtISO } = formatMalaysiaTime(createdAt);
+      const { formattedTime: updatedAtFormatted, isoTimestamp: updatedAtISO } = formatMalaysiaTime(updatedAt);
+      
+      return {
+        id: row.id as string,
+        name: row.name as string,
+        email: row.email as string,
+        subject: row.subject as string,
+        category: row.category as string,
+        message: row.message as string,
+        status: row.status as string,
+        createdAt: createdAtFormatted,
+        createdAtISO,
+        updatedAt: updatedAtFormatted,
+        updatedAtISO
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching support tickets by email:', error);
     throw error;
   }
 }

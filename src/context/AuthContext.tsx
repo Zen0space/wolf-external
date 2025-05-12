@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginAdminUser, getAdminUserById, type AdminUser } from '../lib/db';
+import { loginAdminUser, getAdminUserById, createAdminUser, type AdminUser } from '../lib/db';
 
 interface AuthContextType {
   user: AdminUser | null;
@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
+  signup: (username: string, email: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,6 +60,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signup = async (username: string, email: string, password: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Create the admin user
+      await createAdminUser({
+        username,
+        email,
+        password
+      });
+      // Don't auto-login after signup - require explicit login
+      setLoading(false);
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message.includes('UNIQUE constraint failed')) {
+          setError('Username or email already exists');
+        } else {
+          setError('An error occurred during signup');
+        }
+      } else {
+        setError('An error occurred during signup');
+      }
+      console.error('Signup error:', err);
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('adminUserId');
@@ -74,7 +102,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     error,
     login,
     logout,
-    clearError
+    clearError,
+    signup
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

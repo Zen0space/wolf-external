@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../theme/ThemeContext';
+import AdminLayout from '../../components/AdminLayout';
 import { 
   uploadFile, 
   getCategories, 
@@ -19,118 +19,6 @@ import {
 import '../../theme/theme.css';
 
 // Styled Components
-const DashboardContainer = styled.div`
-  display: flex;
-  width: 100%;
-  min-height: 100vh;
-  background: var(--background-main);
-  color: var(--text-primary);
-`;
-
-// Sidebar styles
-const Sidebar = styled.div`
-  width: 260px;
-  background-color: #24262f;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 1.5rem 0;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-
-  @media (max-width: 768px) {
-    width: 70px;
-    padding: 1rem 0;
-  }
-`;
-
-const SidebarHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1.5rem;
-  margin-bottom: 2rem;
-`;
-
-const LogoIcon = styled.span`
-  font-size: 1.8rem;
-`;
-
-const LogoText = styled.span`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #4A90E2;
-  letter-spacing: -0.02em;
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const SidebarMenu = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-`;
-
-const MenuItem = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-left: 3px solid transparent;
-  text-decoration: none;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-  }
-
-  &.active {
-    background-color: rgba(0, 216, 122, 0.1);
-    color: var(--text-primary);
-    border-left-color: var(--accent-color);
-  }
-
-  @media (max-width: 768px) {
-    padding: 0.75rem;
-    justify-content: center;
-  }
-`;
-
-const MenuIcon = styled.span`
-  font-size: 1.2rem;
-  width: 24px;
-  text-align: center;
-
-  @media (max-width: 768px) {
-    margin: 0;
-  }
-`;
-
-const MenuLabel = styled.span`
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-// Content styles
-const Content = styled.div`
-  flex: 1;
-  padding: 2rem;
-  margin-left: 260px;
-
-  @media (max-width: 768px) {
-    margin-left: 70px;
-    padding: 1.5rem;
-  }
-`;
-
 const DashboardHeader = styled.div`
   margin-bottom: 2rem;
 
@@ -606,48 +494,6 @@ const RefreshIcon = styled.span`
   font-size: 1rem;
 `;
 
-// Admin Sidebar component
-const AdminSidebar = () => {
-  return (
-    <Sidebar>
-      <SidebarHeader>
-        <LogoIcon>🐺</LogoIcon>
-        <LogoText>Wolf Admin</LogoText>
-      </SidebarHeader>
-      <SidebarMenu>
-        <MenuItem to="/admin/dashboard" className="active">
-          <MenuIcon>📊</MenuIcon>
-          <MenuLabel>Dashboard</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/files">
-          <MenuIcon>📁</MenuIcon>
-          <MenuLabel>Files</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/categories">
-          <MenuIcon>🗂️</MenuIcon>
-          <MenuLabel>Categories</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/subscribers">
-          <MenuIcon>📧</MenuIcon>
-          <MenuLabel>Subscribers</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/payment-settings">
-          <MenuIcon>💰</MenuIcon>
-          <MenuLabel>Payment Settings</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/stats">
-          <MenuIcon>📈</MenuIcon>
-          <MenuLabel>Statistics</MenuLabel>
-        </MenuItem>
-        <MenuItem to="/admin/settings">
-          <MenuIcon>⚙️</MenuIcon>
-          <MenuLabel>Settings</MenuLabel>
-        </MenuItem>
-      </SidebarMenu>
-    </Sidebar>
-  );
-};
-
 const StatCard = ({ title, value, icon, color, isLoading }: { title: string; value: string; icon: string; color: string; isLoading?: boolean }) => {
   return (
     <StatCardWrapper>
@@ -841,7 +687,6 @@ const FileUploadSection = ({ onUploadSuccess }: { onUploadSuccess?: () => void }
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [statistics, setStatistics] = useState({
@@ -1006,111 +851,108 @@ const AdminDashboard = () => {
   };
   
   return (
-    <DashboardContainer data-theme={theme}>
-      <AdminSidebar />
-      <Content>
-        <DashboardHeader>
-          <h1>Welcome back, {user?.username}</h1>
-          <UserInfo>
-            <UserName>{user?.username}</UserName>
-            <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
-          </UserInfo>
-          
-          <TabsContainer>
-            <TabButton 
-              className={activeTab === 'overview' ? 'active' : ''}
-              onClick={() => setActiveTab('overview')}
-            >
-              Overview
-            </TabButton>
-            <TabButton 
-              className={activeTab === 'uploads' ? 'active' : ''}
-              onClick={() => setActiveTab('uploads')}
-            >
-              File Uploads
-            </TabButton>
-          </TabsContainer>
-        </DashboardHeader>
+    <AdminLayout activePage="dashboard">
+      <DashboardHeader>
+        <h1>Welcome back, {user?.username}</h1>
+        <UserInfo>
+          <UserName>{user?.username}</UserName>
+          <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
+        </UserInfo>
         
-        {activeTab === 'overview' ? (
-          <>
-            <StatsGrid>
-              {stats.map((stat, index) => (
-                <StatCard
-                  key={index}
-                  title={stat.title}
-                  value={stat.value}
-                  icon={stat.icon}
-                  color={stat.color}
-                  isLoading={loading}
-                />
-              ))}
-            </StatsGrid>
-            
-            <SectionHeader>
-              <h2>Script Categories</h2>
-              <SecondaryButton>Manage Categories</SecondaryButton>
-            </SectionHeader>
-            
-            <ToolsGrid>
-              {tools.map((tool, index) => (
-                <ToolCard
-                  key={index}
-                  title={tool.title}
-                  description={tool.description}
-                  icon={tool.icon}
-                />
-              ))}
-            </ToolsGrid>
-            
-            <SectionHeader>
-              <h2>Recent Activity</h2>
-              <RefreshButton onClick={refreshDashboard}>
-                <RefreshIcon>🔄</RefreshIcon>
-                {activitiesLoading ? 'Refreshing...' : 'Refresh Now'}
-              </RefreshButton>
-            </SectionHeader>
-            
-            <ActivityList>
-              {activitiesLoading ? (
-                <ActivityItem>
-                  <ActivityIconWrapper>
-                    <LoadingSpinner />
-                  </ActivityIconWrapper>
+        <TabsContainer>
+          <TabButton 
+            className={activeTab === 'overview' ? 'active' : ''}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </TabButton>
+          <TabButton 
+            className={activeTab === 'uploads' ? 'active' : ''}
+            onClick={() => setActiveTab('uploads')}
+          >
+            File Uploads
+          </TabButton>
+        </TabsContainer>
+      </DashboardHeader>
+      
+      {activeTab === 'overview' ? (
+        <>
+          <StatsGrid>
+            {stats.map((stat, index) => (
+              <StatCard
+                key={index}
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+                color={stat.color}
+                isLoading={loading}
+              />
+            ))}
+          </StatsGrid>
+          
+          <SectionHeader>
+            <h2>Script Categories</h2>
+            <SecondaryButton>Manage Categories</SecondaryButton>
+          </SectionHeader>
+          
+          <ToolsGrid>
+            {tools.map((tool, index) => (
+              <ToolCard
+                key={index}
+                title={tool.title}
+                description={tool.description}
+                icon={tool.icon}
+              />
+            ))}
+          </ToolsGrid>
+          
+          <SectionHeader>
+            <h2>Recent Activity</h2>
+            <RefreshButton onClick={refreshDashboard}>
+              <RefreshIcon>🔄</RefreshIcon>
+              {activitiesLoading ? 'Refreshing...' : 'Refresh Now'}
+            </RefreshButton>
+          </SectionHeader>
+          
+          <ActivityList>
+            {activitiesLoading ? (
+              <ActivityItem>
+                <ActivityIconWrapper>
+                  <LoadingSpinner />
+                </ActivityIconWrapper>
+                <ActivityContent>
+                  <ActivityText>Loading recent activities...</ActivityText>
+                </ActivityContent>
+              </ActivityItem>
+            ) : activities.length > 0 ? (
+              activities.map((activity) => (
+                <ActivityItem key={activity.id}>
+                  <ActivityIconWrapper>{getActivityIcon(activity.type)}</ActivityIconWrapper>
                   <ActivityContent>
-                    <ActivityText>Loading recent activities...</ActivityText>
+                    <ActivityText>{getActivityText(activity)}</ActivityText>
+                    <TimeTooltip data-iso={activity.isoTimestamp}>
+                      <ActivityTime>{activity.formattedTime}</ActivityTime>
+                    </TimeTooltip>
                   </ActivityContent>
                 </ActivityItem>
-              ) : activities.length > 0 ? (
-                activities.map((activity) => (
-                  <ActivityItem key={activity.id}>
-                    <ActivityIconWrapper>{getActivityIcon(activity.type)}</ActivityIconWrapper>
-                    <ActivityContent>
-                      <ActivityText>{getActivityText(activity)}</ActivityText>
-                      <TimeTooltip data-iso={activity.isoTimestamp}>
-                        <ActivityTime>{activity.formattedTime}</ActivityTime>
-                      </TimeTooltip>
-                    </ActivityContent>
-                  </ActivityItem>
-                ))
-              ) : (
-                <ActivityItem>
-                  <ActivityIconWrapper>📝</ActivityIconWrapper>
-                  <ActivityContent>
-                    <ActivityText>No recent activities found</ActivityText>
-                    <ActivityTime>Try adding some files or getting downloads</ActivityTime>
-                  </ActivityContent>
-                </ActivityItem>
-              )}
-            </ActivityList>
-          </>
-        ) : (
-          <UploadContainer>
-            <FileUploadSection onUploadSuccess={refreshDashboard} />
-          </UploadContainer>
-        )}
-      </Content>
-    </DashboardContainer>
+              ))
+            ) : (
+              <ActivityItem>
+                <ActivityIconWrapper>📝</ActivityIconWrapper>
+                <ActivityContent>
+                  <ActivityText>No recent activities found</ActivityText>
+                  <ActivityTime>Try adding some files or getting downloads</ActivityTime>
+                </ActivityContent>
+              </ActivityItem>
+            )}
+          </ActivityList>
+        </>
+      ) : (
+        <UploadContainer>
+          <FileUploadSection onUploadSuccess={refreshDashboard} />
+        </UploadContainer>
+      )}
+    </AdminLayout>
   );
 };
 

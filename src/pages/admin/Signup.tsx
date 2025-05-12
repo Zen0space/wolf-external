@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createAdminUser } from '../../lib/db';
+import { useAuth } from '../../context/AuthContext';
 import '../../theme/theme.css';
 
 // CSS-in-JS styles
@@ -11,6 +11,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     minHeight: '100vh',
     padding: '2rem',
+    background: 'var(--background-main)',
   },
   card: {
     backgroundColor: 'var(--background-paper)',
@@ -78,20 +79,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.9rem',
     position: 'relative',
   },
-  successMessage: {
-    backgroundColor: 'rgba(0, 216, 122, 0.1)',
-    borderLeft: '3px solid var(--accent-color)',
-    color: 'var(--accent-color)',
-    padding: '1.5rem',
-    borderRadius: '4px',
-    fontSize: '0.9rem',
-    textAlign: 'center',
-  },
-  successTitle: {
-    marginBottom: '0.5rem',
-    fontSize: '1.2rem',
-    fontWeight: 600,
-  },
   errorCloseBtn: {
     position: 'absolute',
     top: '0.5rem',
@@ -126,98 +113,44 @@ const styles: Record<string, React.CSSProperties> = {
   }
 };
 
-// Secret key for admin signup - in a real app, this would be stored securely in environment variables
-// and not hardcoded in the source code
-const ADMIN_SIGNUP_SECRET_KEY = import.meta.env.VITE_ADMIN_SIGNUP_SECRET || 'wolf-admin-secret-2024';
-
 const Signup = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    secretKey: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formError, setFormError] = useState('');
+  const { signup, error, clearError, loading } = useAuth();
   const navigate = useNavigate();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    setFormError('');
+    
     // Basic validation
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword || !formData.secretKey) {
-      setError('All fields are required');
-      setLoading(false);
+    if (!username || !email || !password || !confirmPassword) {
+      setFormError('All fields are required');
       return;
     }
 
-    // Verify secret key
-    if (formData.secretKey !== ADMIN_SIGNUP_SECRET_KEY) {
-      setError('Invalid secret key. You are not authorized to create an admin account.');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      setLoading(false);
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
-      setLoading(false);
+    if (password !== confirmPassword) {
+      setFormError('Passwords do not match');
       return;
     }
 
     try {
-      await createAdminUser({
-        username: formData.username,
-        email: formData.email,
-        password: formData.password
-      });
-
-      setSuccess(true);
+      await signup(username, email, password);
       
-      // Redirect to login after successful signup
-      setTimeout(() => {
+      // If no error after signup, navigate to login
+      if (!error) {
         navigate('/admin/login');
-      }, 2000);
-
-    } catch (err: any) {
-      if (err.message && err.message.includes('UNIQUE constraint failed')) {
-        setError('Username or email already exists');
-      } else {
-        setError('An error occurred during signup');
-        console.error('Signup error:', err);
       }
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Signup error:', err);
     }
   };
 
   return (
-    <div style={{ ...styles.container, background: 'var(--background-main)' }}>
+    <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
           <h1 style={styles.title}>Admin Signup</h1>
@@ -227,112 +160,86 @@ const Signup = () => {
           </div>
         </div>
 
-        {success ? (
-          <div style={styles.successMessage}>
-            <h2 style={styles.successTitle}>Account Created Successfully!</h2>
-            <p>Redirecting to login page...</p>
-          </div>
-        ) : (
-          <form style={styles.form} onSubmit={handleSubmit}>
-            {error && (
-              <div style={styles.errorMessage}>
-                {error}
-                <button 
-                  type="button"
-                  style={styles.errorCloseBtn}
-                  onClick={() => setError('')}
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            <div style={styles.formGroup}>
-              <label htmlFor="secretKey" style={styles.label}>Admin Secret Key</label>
-              <input
-                id="secretKey"
-                name="secretKey"
-                type="password"
-                value={formData.secretKey}
-                onChange={handleChange}
-                placeholder="Enter the admin secret key"
-                disabled={loading}
-                style={styles.input}
-              />
+        <form style={styles.form} onSubmit={handleSubmit}>
+          {(error || formError) && (
+            <div style={styles.errorMessage}>
+              {formError || error}
+              <button 
+                type="button" 
+                style={styles.errorCloseBtn} 
+                onClick={() => {
+                  setFormError('');
+                  clearError();
+                }}
+              >
+                ×
+              </button>
             </div>
+          )}
 
-            <div style={styles.formGroup}>
-              <label htmlFor="username" style={styles.label}>Username</label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="Choose a username"
-                disabled={loading}
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label htmlFor="email" style={styles.label}>Email</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                disabled={loading}
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label htmlFor="password" style={styles.label}>Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Create a password"
-                disabled={loading}
-                style={styles.input}
-              />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label htmlFor="confirmPassword" style={styles.label}>Confirm Password</label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-                disabled={loading}
-                style={styles.input}
-              />
-            </div>
-
-            <button 
-              type="submit" 
-              style={{
-                ...styles.submitButton,
-                opacity: loading ? 0.6 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer',
-              }}
+          <div style={styles.formGroup}>
+            <label htmlFor="username" style={styles.label}>Username</label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
               disabled={loading}
-            >
-              {loading ? 'Creating Account...' : 'Sign Up'}
-            </button>
-          </form>
-        )}
+              style={styles.input}
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="email" style={styles.label}>Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              disabled={loading}
+              style={styles.input}
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="password" style={styles.label}>Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Choose a password"
+              disabled={loading}
+              style={styles.input}
+            />
+          </div>
+
+          <div style={styles.formGroup}>
+            <label htmlFor="confirmPassword" style={styles.label}>Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              disabled={loading}
+              style={styles.input}
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            style={styles.submitButton}
+            disabled={loading}
+          >
+            {loading ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
 
         <div style={styles.footer}>
-          <p>Already have an account? <Link to="/admin/login" style={styles.link}>Login</Link></p>
+          Already have an account? <Link to="/admin/login" style={styles.link}>Login</Link>
         </div>
       </div>
     </div>

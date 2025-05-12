@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../../theme/theme.css';
 
@@ -11,6 +11,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     minHeight: '100vh',
     padding: '2rem',
+    background: 'var(--background-main)',
   },
   card: {
     backgroundColor: 'var(--background-paper)',
@@ -147,7 +148,7 @@ const Login = () => {
   };
 
   return (
-    <div style={{ ...styles.container, background: 'var(--background-main)' }}>
+    <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
           <h1 style={styles.title}>Admin Login</h1>
@@ -202,11 +203,7 @@ const Login = () => {
 
           <button 
             type="submit" 
-            style={{
-              ...styles.submitButton,
-              opacity: loading ? 0.6 : 1,
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }} 
+            style={styles.submitButton}
             disabled={loading}
           >
             {loading ? 'Logging in...' : 'Login'}
@@ -214,7 +211,7 @@ const Login = () => {
         </form>
 
         <div style={styles.footer}>
-          <p>Don't have an account? <Link to="/admin/signup" style={styles.link}>Sign up</Link></p>
+          Don't have an account? <Link to="/admin/signup" style={styles.link}>Sign up</Link>
         </div>
       </div>
     </div>
