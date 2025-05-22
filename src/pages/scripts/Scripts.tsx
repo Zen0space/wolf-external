@@ -506,7 +506,32 @@ const Scripts: FC = () => {
       }
     } catch (error) {
       console.error('Error processing download:', error);
-      alert('There was an error downloading the file. Please try again.');
+      
+      // Provide more specific error messages based on the error type
+      if (error instanceof Error) {
+        if (error.message.includes('extremely large')) {
+          // For extremely large files, show a more helpful message
+          alert(`${error.message}
+
+Please contact support for alternative download options.`);
+        } else if (error.message.includes('too large')) {
+          // For files that are large but not extremely large
+          alert('This file is too large to download directly through the browser. Please try again later or contact support for assistance.');
+        } else {
+          // For other errors
+          alert(`There was an error downloading the file: ${error.message}
+
+Please try again or contact support if the problem persists.`);
+        }
+      } else {
+        // Generic error message as fallback
+        alert('There was an error downloading the file. Please try again or contact support.');
+      }
+      
+      // Close the modal after error
+      setShowEmailModal(false);
+      setEmail('');
+      setSelectedFileId(null);
     } finally {
       setLoading(false);
     }

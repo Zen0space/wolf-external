@@ -132,40 +132,75 @@ export function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
   return result;
 }
 
-// Helper function to convert Base64 to ArrayBuffer
+// Helper function to convert Base64 to ArrayBuffer with ultra-efficient memory handling
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   try {
-    // Process large base64 strings in chunks to avoid memory issues
-    const chunkSize = 1024 * 1024; // Size of base64 string to process at once (not the decoded size)
-    const chunks = [];
-    let totalLength = 0;
+    // For very large files, we need to be extremely careful with memory
+    // First, we'll calculate the expected size of the decoded data
+    // Base64 encodes 3 bytes into 4 characters, with padding at the end
+    const paddingLength = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    const expectedLength = Math.floor((base64.length * 3) / 4) - paddingLength;
     
-    // Process the base64 string in chunks
+    // Create a single result buffer of the exact size we need
+    const result = new Uint8Array(expectedLength);
+    
+    // Process in very small chunks to minimize memory usage
+    // Using 8KB chunks for base64 string (which decodes to ~6KB of binary data)
+    const chunkSize = 8 * 1024; // 8KB of base64 text at a time
+    let resultIndex = 0;
+    
+    // Handle each chunk individually without storing intermediate arrays
     for (let i = 0; i < base64.length; i += chunkSize) {
-      const chunk = base64.slice(i, Math.min(i + chunkSize, base64.length));
-      const binaryString = atob(chunk);
-      const bytes = new Uint8Array(binaryString.length);
+      // Get the current chunk of base64 text
+      const end = Math.min(i + chunkSize, base64.length);
+      const chunk = base64.substring(i, end);
       
-      for (let j = 0; j < binaryString.length; j++) {
-        bytes[j] = binaryString.charCodeAt(j);
+      // Only decode complete base64 quartets (groups of 4 characters)
+      // If the chunk doesn't end on a quartet boundary, we'll handle it specially
+      const completeQuartets = Math.floor(chunk.length / 4);
+      const completeChunkLength = completeQuartets * 4;
+      
+      // Decode the complete quartets in this chunk
+      if (completeChunkLength > 0) {
+        const completeChunk = chunk.substring(0, completeChunkLength);
+        const binaryString = atob(completeChunk);
+        
+        // Copy binary data directly to the result buffer
+        for (let j = 0; j < binaryString.length; j++) {
+          result[resultIndex++] = binaryString.charCodeAt(j);
+        }
       }
       
-      chunks.push(bytes);
-      totalLength += bytes.length;
+      // Handle any remaining characters (less than 4) by combining with the next chunk
+      // This only happens for the last iteration or if chunkSize is not a multiple of 4
+      const remaining = chunk.length - completeChunkLength;
+      if (remaining > 0 && end < base64.length) {
+        // Look ahead to get enough characters to form a complete quartet
+        const nextChunkStart = end;
+        const nextChunkEnd = Math.min(nextChunkStart + (4 - remaining), base64.length);
+        const remainingChars = base64.substring(end - remaining, nextChunkEnd);
+        
+        // Only process if we have a complete quartet
+        if (remainingChars.length === 4) {
+          const binaryString = atob(remainingChars);
+          for (let j = 0; j < binaryString.length; j++) {
+            result[resultIndex++] = binaryString.charCodeAt(j);
+          }
+          // Skip the characters we just processed in the next iteration
+          i += (4 - remaining);
+        }
+      }
     }
     
-    // Combine all chunks into a single ArrayBuffer
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    
-    for (const chunk of chunks) {
-      result.set(chunk, offset);
-      offset += chunk.length;
+    // If we didn't fill the entire buffer (due to padding or calculation errors),
+    // return just the portion we filled
+    if (resultIndex < expectedLength) {
+      return result.slice(0, resultIndex).buffer;
     }
     
     return result.buffer;
   } catch (error) {
     console.error('Error converting base64 to ArrayBuffer:', error);
-    throw new Error(`Failed to process file content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Failed to process large file content: ${error instanceof Error ? error.message : 'Unknown error'}. The file may be too large to download directly.`);
   }
 }

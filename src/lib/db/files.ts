@@ -171,12 +171,27 @@ export async function getFile(id: string) {
       }
       
       try {
-        // Convert base64 content to ArrayBuffer using safe processing for large files
+        // For extremely large files, we need to be extra careful
+        // First check the size of the file to determine the best approach
+        const fileSize = Number(file.size);
+        
+        if (fileSize > 100 * 1024 * 1024) { // Over 100MB
+          // For extremely large files, provide a more specific error message
+          console.warn('File is extremely large (>100MB), suggesting alternative download method');
+          throw new Error(`This file is extremely large (${Math.round(fileSize / (1024 * 1024))}MB) and cannot be downloaded directly through the browser. Please contact support for an alternative download method.`);
+        }
+        
+        // Convert base64 content to ArrayBuffer using our ultra-efficient processing for large files
         const content = base64ToArrayBuffer(file.content as string);
         return { ...fileData, content };
       } catch (error) {
         console.error('Error processing file content from database:', error);
-        throw new Error(`Failed to process file content: ${error instanceof Error ? error.message : 'Unknown error'}. The file may be too large to download directly. Please contact support.`);
+        if (error instanceof Error && error.message.includes('extremely large')) {
+          // Pass through our custom error message for extremely large files
+          throw error;
+        } else {
+          throw new Error(`Failed to process file content: ${error instanceof Error ? error.message : 'Unknown error'}. The file may be too large to download directly. Please contact support.`);
+        }
       }
     }
   } catch (error) {
