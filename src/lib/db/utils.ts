@@ -132,75 +132,161 @@ export function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
   return result;
 }
 
-// Helper function to convert Base64 to ArrayBuffer with ultra-efficient memory handling
+// Helper function to convert Base64 to ArrayBuffer with maximum robustness for large files
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   try {
-    // For very large files, we need to be extremely careful with memory
-    // First, we'll calculate the expected size of the decoded data
-    // Base64 encodes 3 bytes into 4 characters, with padding at the end
-    const paddingLength = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
-    const expectedLength = Math.floor((base64.length * 3) / 4) - paddingLength;
+    // For extremely large base64 strings, we need a completely different approach
+    // that minimizes memory usage and handles browser limitations
     
-    // Create a single result buffer of the exact size we need
-    const result = new Uint8Array(expectedLength);
+    // First, measure the string to get an idea of how large this file is
+    const base64Length = base64.length;
+    console.log(`Processing base64 string of length: ${base64Length}`);
     
-    // Process in very small chunks to minimize memory usage
-    // Using 8KB chunks for base64 string (which decodes to ~6KB of binary data)
-    const chunkSize = 8 * 1024; // 8KB of base64 text at a time
-    let resultIndex = 0;
-    
-    // Handle each chunk individually without storing intermediate arrays
-    for (let i = 0; i < base64.length; i += chunkSize) {
-      // Get the current chunk of base64 text
-      const end = Math.min(i + chunkSize, base64.length);
-      const chunk = base64.substring(i, end);
-      
-      // Only decode complete base64 quartets (groups of 4 characters)
-      // If the chunk doesn't end on a quartet boundary, we'll handle it specially
-      const completeQuartets = Math.floor(chunk.length / 4);
-      const completeChunkLength = completeQuartets * 4;
-      
-      // Decode the complete quartets in this chunk
-      if (completeChunkLength > 0) {
-        const completeChunk = chunk.substring(0, completeChunkLength);
-        const binaryString = atob(completeChunk);
-        
-        // Copy binary data directly to the result buffer
-        for (let j = 0; j < binaryString.length; j++) {
-          result[resultIndex++] = binaryString.charCodeAt(j);
-        }
-      }
-      
-      // Handle any remaining characters (less than 4) by combining with the next chunk
-      // This only happens for the last iteration or if chunkSize is not a multiple of 4
-      const remaining = chunk.length - completeChunkLength;
-      if (remaining > 0 && end < base64.length) {
-        // Look ahead to get enough characters to form a complete quartet
-        const nextChunkStart = end;
-        const nextChunkEnd = Math.min(nextChunkStart + (4 - remaining), base64.length);
-        const remainingChars = base64.substring(end - remaining, nextChunkEnd);
-        
-        // Only process if we have a complete quartet
-        if (remainingChars.length === 4) {
-          const binaryString = atob(remainingChars);
-          for (let j = 0; j < binaryString.length; j++) {
-            result[resultIndex++] = binaryString.charCodeAt(j);
-          }
-          // Skip the characters we just processed in the next iteration
-          i += (4 - remaining);
-        }
-      }
+    // For very large strings (>50MB of base64 data), use an alternative approach
+    if (base64Length > 50 * 1024 * 1024) {
+      return processLargeBase64String(base64);
     }
     
-    // If we didn't fill the entire buffer (due to padding or calculation errors),
-    // return just the portion we filled
-    if (resultIndex < expectedLength) {
-      return result.slice(0, resultIndex).buffer;
+    // For medium-sized strings, use a more efficient approach than the standard one
+    if (base64Length > 10 * 1024 * 1024) {
+      return processMediumBase64String(base64);
     }
     
-    return result.buffer;
+    // For smaller strings, use the standard approach which is more straightforward
+    return processStandardBase64String(base64);
   } catch (error) {
     console.error('Error converting base64 to ArrayBuffer:', error);
-    throw new Error(`Failed to process large file content: ${error instanceof Error ? error.message : 'Unknown error'}. The file may be too large to download directly.`);
+    throw new Error(`Failed to process file content: ${error instanceof Error ? error.message : 'Unknown error'}. The file may be too large to download directly.`);
+  }
+}
+
+// Process extremely large base64 strings (>50MB)
+function processLargeBase64String(base64: string): ArrayBuffer {
+  console.log('Using extreme large file processing method');
+  
+  try {
+    // For extremely large files, we use the smallest possible chunk size
+    // and avoid creating any intermediate large strings or arrays
+    const chunkSize = 1024; // 1KB chunks of base64 (very small to minimize memory pressure)
+    
+    // Calculate output size (approximate)
+    const paddingLength = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    const outputLength = Math.floor((base64.length * 3) / 4) - paddingLength;
+    
+    // Allocate a buffer for the result, with some extra space just in case
+    const result = new Uint8Array(outputLength + 8);
+    let resultIndex = 0;
+    
+    // Process in very small chunks
+    for (let i = 0; i < base64.length; i += chunkSize) {
+      // Extract a small chunk that's guaranteed to be a multiple of 4 characters
+      const end = Math.min(i + chunkSize, base64.length);
+      const adjustedEnd = end - (end - i) % 4; // Ensure we only process complete quartets
+      
+      if (adjustedEnd <= i) continue; // Skip if we don't have a complete quartet
+      
+      // Process this small chunk
+      const chunk = base64.substring(i, adjustedEnd);
+      const binaryString = atob(chunk);
+      
+      // Copy bytes directly to the result buffer
+      for (let j = 0; j < binaryString.length; j++) {
+        result[resultIndex++] = binaryString.charCodeAt(j);
+      }
+    }
+    
+    // Handle any remaining characters at the end (if not a multiple of 4)
+    const remainder = base64.length % 4;
+    if (remainder > 0) {
+      // Get the last complete quartet
+      const lastQuartet = base64.substring(base64.length - remainder - 4, base64.length);
+      const binaryString = atob(lastQuartet);
+      
+      // Copy only the relevant bytes (excluding padding)
+      for (let j = 0; j < binaryString.length; j++) {
+        result[resultIndex++] = binaryString.charCodeAt(j);
+      }
+    }
+    
+    // Return only the filled portion of the buffer
+    return result.slice(0, resultIndex).buffer;
+  } catch (error) {
+    console.error('Error in processLargeBase64String:', error);
+    throw error;
+  }
+}
+
+// Process medium-sized base64 strings (10-50MB)
+function processMediumBase64String(base64: string): ArrayBuffer {
+  console.log('Using medium file processing method');
+  
+  try {
+    // Use a moderate chunk size for medium files
+    const chunkSize = 4096; // 4KB chunks
+    
+    // Calculate expected output size
+    const paddingLength = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    const outputLength = Math.floor((base64.length * 3) / 4) - paddingLength;
+    
+    // Allocate a buffer for the result
+    const result = new Uint8Array(outputLength);
+    let resultIndex = 0;
+    
+    // Process in chunks that are multiples of 4 characters (base64 quartets)
+    for (let i = 0; i < base64.length; i += chunkSize) {
+      const end = Math.min(i + chunkSize, base64.length);
+      const adjustedEnd = end - (end - i) % 4; // Ensure we only process complete quartets
+      
+      if (adjustedEnd <= i) continue; // Skip if we don't have a complete quartet
+      
+      // Process this chunk
+      const chunk = base64.substring(i, adjustedEnd);
+      const binaryString = atob(chunk);
+      
+      // Copy bytes to the result buffer
+      for (let j = 0; j < binaryString.length; j++) {
+        result[resultIndex++] = binaryString.charCodeAt(j);
+      }
+    }
+    
+    // Handle any remaining characters at the end (if not a multiple of 4)
+    const remainder = base64.length % 4;
+    if (remainder > 0) {
+      // Pad to make a complete quartet if needed
+      const lastPart = base64.substring(base64.length - remainder);
+      const paddedLastPart = lastPart + '='.repeat(4 - remainder);
+      const binaryString = atob(paddedLastPart);
+      
+      // Copy only the relevant bytes (excluding padding)
+      for (let j = 0; j < 3 - paddingLength; j++) {
+        result[resultIndex++] = binaryString.charCodeAt(j);
+      }
+    }
+    
+    // Return only the filled portion of the buffer
+    return result.slice(0, resultIndex).buffer;
+  } catch (error) {
+    console.error('Error in processMediumBase64String:', error);
+    throw error;
+  }
+}
+
+// Process standard-sized base64 strings (<10MB)
+function processStandardBase64String(base64: string): ArrayBuffer {
+  console.log('Using standard file processing method');
+  
+  try {
+    // For smaller strings, we can use a more direct approach
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    return bytes.buffer;
+  } catch (error) {
+    console.error('Error in processStandardBase64String:', error);
+    throw error;
   }
 }

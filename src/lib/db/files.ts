@@ -171,14 +171,22 @@ export async function getFile(id: string) {
       }
       
       try {
-        // For extremely large files, we need to be extra careful
+        // For large files, we need to be extra careful
         // First check the size of the file to determine the best approach
         const fileSize = Number(file.size);
         
-        if (fileSize > 100 * 1024 * 1024) { // Over 100MB
-          // For extremely large files, provide a more specific error message
-          console.warn('File is extremely large (>100MB), suggesting alternative download method');
+        // Log file size for debugging
+        console.log(`Processing file download, size: ${Math.round(fileSize / (1024 * 1024))}MB`);
+        
+        if (fileSize > 200 * 1024 * 1024) { // Over 200MB
+          // For extremely large files, provide a specific error message
+          console.warn('File is extremely large (>200MB), suggesting alternative download method');
           throw new Error(`This file is extremely large (${Math.round(fileSize / (1024 * 1024))}MB) and cannot be downloaded directly through the browser. Please contact support for an alternative download method.`);
+        }
+        
+        // For files between 50-200MB, use a special approach
+        if (fileSize > 50 * 1024 * 1024) {
+          console.log('Using special handling for large file (50-200MB)');
         }
         
         // Convert base64 content to ArrayBuffer using our ultra-efficient processing for large files
