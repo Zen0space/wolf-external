@@ -5,7 +5,7 @@ import '../../theme/theme.css';
 import SupportMe from '../../components/SupportMe';
 import Navbar from '../../components/Navbar';
 
-import { getFiles, getCategories, getDownloadCount, getFile, saveEmailSubscriber, type FileInfo } from '../../lib/db';
+import { getFiles, getCategories, getDownloadCount, getFileInfo, saveEmailSubscriber, type FileInfo } from '../../lib/db';
 
 // Define the CategoryInfo interface
 interface CategoryInfo {
@@ -463,25 +463,24 @@ const Scripts: FC = () => {
       // Save the email subscriber to the database
       await saveEmailSubscriber(email, selectedFileId);
       
-      // Get the file with content from the database
-      const fileData = await getFile(selectedFileId);
+      // Get basic file info (without content) to display name in success message
+      const fileInfo = await getFileInfo(selectedFileId);
       
-      if (fileData) {
-        // Create a blob from the file content
-        const blob = new Blob([fileData.content], { type: 'application/zip' });
+      if (fileInfo) {
+        // Use the Netlify function endpoint for downloads
+        const downloadUrl = `/api/download/${selectedFileId}`;
         
-        // Create a download link
-        const url = URL.createObjectURL(blob);
+        // Create and trigger download link
         const link = document.createElement('a');
-        link.href = url;
-        link.download = fileData.fileName;
+        link.href = downloadUrl;
+        link.target = '_blank'; // Open in new tab to avoid navigation issues
+        link.download = fileInfo.fileName;
         document.body.appendChild(link);
         
         // Trigger download
         link.click();
         
         // Clean up
-        URL.revokeObjectURL(url);
         document.body.removeChild(link);
         
         // Close the modal and reset state
@@ -496,7 +495,7 @@ const Scripts: FC = () => {
         }));
         
         // Show success notification
-        setDownloadedFileName(fileData.fileName);
+        setDownloadedFileName(fileInfo.fileName);
         setShowSuccessNotification(true);
         
         // Hide notification after 5 seconds

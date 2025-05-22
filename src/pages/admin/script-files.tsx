@@ -386,7 +386,9 @@ const ScriptFiles = () => {
                 </FileDetails>
                 <FileDescription>{file.description || 'No description provided'}</FileDescription>
                 <FileActions>
-                  <ActionButton className="primary" onClick={() => window.open(`/download/${file.id}`, '_blank')}>
+                  <ActionButton className="primary" onClick={() => {
+                    window.open(`/api/download/${file.id}`, '_blank');
+                  }}>
                     <Download size={16} /> Download
                   </ActionButton>
                   <ActionButton onClick={() => window.location.href = `/admin/edit-file/${file.id}`}>

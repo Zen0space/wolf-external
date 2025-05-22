@@ -1,8 +1,16 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
+# Redirect API requests to the serverless function
+[[redirects]]
+  from = "/api/download/*"
+  to = "/.netlify/functions/download/:splat"
+  status = 200
+
+# Fallback for all other routes to the SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 
+  status = 200

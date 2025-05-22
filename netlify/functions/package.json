@@ -1,0 +1,10 @@
+{
+  "name": "netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify serverless functions for wolf-external",
+  "dependencies": {
+    "@libsql/client": "^0.15.4",
+    "@supabase/supabase-js": "^2.49.8",
+    "uuid": "^11.1.0"
+  }
+}
