@@ -245,6 +245,15 @@ const SuccessMessage = styled.div`
   gap: 0.5rem;
 `;
 
+const InfoMessage = styled.div`
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #0056b3;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+`;
+
 const LoadingSpinner = styled.div`
   display: inline-block;
   width: 20px;
@@ -278,6 +287,7 @@ const EditFile = () => {
   const [file, setFile] = useState<FileData | null>(null);
   const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState('Loading file information...');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -370,6 +380,20 @@ const EditFile = () => {
         updateData.fileType = newFile.type || 'application/zip';
         updateData.size = newFile.size;
         updateData.content = fileContent;
+        
+        // Add loading message for large files with size-specific information
+        if (newFile.size > 5 * 1024 * 1024) {
+          setLoading(true);
+          
+          // Different messages based on file size
+          if (newFile.size > 45 * 1024 * 1024) {
+            setLoadingMessage('Uploading very large file (>45MB). This may take some time and will be stored in the database...');
+          } else if (newFile.size > 20 * 1024 * 1024) {
+            setLoadingMessage('Uploading large file to cloud storage. This may take some time...');
+          } else {
+            setLoadingMessage('Uploading file to cloud storage...');
+          }
+        }
       }
 
       const success = await updateFile(id, updateData);
@@ -421,14 +445,18 @@ const EditFile = () => {
 
       {success && (
         <SuccessMessage>
-          File updated successfully! Redirecting...
+          <strong>Success!</strong> File updated successfully. Redirecting to file list...
         </SuccessMessage>
       )}
+      
+      <InfoMessage>
+        <strong>Note:</strong> Large files (over 5MB) will be automatically stored in cloud storage for better performance.
+      </InfoMessage>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem' }}>
           <LoadingSpinner />
-          <p>Loading file data...</p>
+          <p>{loadingMessage}</p>
         </div>
       ) : error && !file ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: '#e53e3e' }}>
