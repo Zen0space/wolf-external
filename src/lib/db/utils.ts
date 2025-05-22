@@ -134,15 +134,38 @@ export function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
 
 // Helper function to convert Base64 to ArrayBuffer
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  // Since our arrayBufferToBase64 function now returns a concatenated string of base64 chunks,
-  // we need to ensure we're handling a single base64 string for decoding
-  // This is a simplified version that assumes the base64 string is valid
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+  try {
+    // Process large base64 strings in chunks to avoid memory issues
+    const chunkSize = 1024 * 1024; // Size of base64 string to process at once (not the decoded size)
+    const chunks = [];
+    let totalLength = 0;
+    
+    // Process the base64 string in chunks
+    for (let i = 0; i < base64.length; i += chunkSize) {
+      const chunk = base64.slice(i, Math.min(i + chunkSize, base64.length));
+      const binaryString = atob(chunk);
+      const bytes = new Uint8Array(binaryString.length);
+      
+      for (let j = 0; j < binaryString.length; j++) {
+        bytes[j] = binaryString.charCodeAt(j);
+      }
+      
+      chunks.push(bytes);
+      totalLength += bytes.length;
+    }
+    
+    // Combine all chunks into a single ArrayBuffer
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    return result.buffer;
+  } catch (error) {
+    console.error('Error converting base64 to ArrayBuffer:', error);
+    throw new Error(`Failed to process file content: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  
-  return bytes.buffer;
 }

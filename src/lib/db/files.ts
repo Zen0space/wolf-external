@@ -146,28 +146,38 @@ export async function getFile(id: string) {
     
     // Handle content based on where it's stored
     if (storagePath) {
-      // File is stored in Supabase storage
-      // Get the public URL for the file
-      const publicUrl = getFileUrl(storagePath as string);
-      
-      // Fetch the file content from Supabase
-      const response = await fetch(publicUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch file from storage: ${response.statusText}`);
+      try {
+        // File is stored in Supabase storage
+        // Get the public URL for the file
+        const publicUrl = getFileUrl(storagePath as string);
+        
+        // Fetch the file content from Supabase
+        const response = await fetch(publicUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file from storage: ${response.statusText}`);
+        }
+        
+        // Get the file content as ArrayBuffer
+        const content = await response.arrayBuffer();
+        return { ...fileData, content };
+      } catch (error) {
+        console.error('Error downloading file from Supabase storage:', error);
+        throw new Error(`Failed to download file from cloud storage: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-      
-      // Get the file content as ArrayBuffer
-      const content = await response.arrayBuffer();
-      return { ...fileData, content };
     } else {
       // File is stored in the database
       if (!file.content) {
         throw new Error('File content not found in database');
       }
       
-      // Convert base64 content to ArrayBuffer
-      const content = base64ToArrayBuffer(file.content as string);
-      return { ...fileData, content };
+      try {
+        // Convert base64 content to ArrayBuffer using safe processing for large files
+        const content = base64ToArrayBuffer(file.content as string);
+        return { ...fileData, content };
+      } catch (error) {
+        console.error('Error processing file content from database:', error);
+        throw new Error(`Failed to process file content: ${error instanceof Error ? error.message : 'Unknown error'}. The file may be too large to download directly. Please contact support.`);
+      }
     }
   } catch (error) {
     console.error('Error fetching file:', error);
