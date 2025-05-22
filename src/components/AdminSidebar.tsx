@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import { Home, FileText, Folder, Mail, MessageSquare, DollarSign, BarChart2, Settings, Globe } from 'react-feather';
 
 const Sidebar = styled.div`
   width: 260px;
@@ -27,8 +28,12 @@ const SidebarHeader = styled.div`
   margin-bottom: 2rem;
 `;
 
-const LogoIcon = styled.span`
+const LogoIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.8rem;
+  color: #4A90E2;
 `;
 
 const LogoText = styled.span`
@@ -76,13 +81,21 @@ const MenuItem = styled(Link)`
   }
 `;
 
-const MenuIcon = styled.span`
-  font-size: 1.2rem;
+const MenuIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
-  text-align: center;
+  color: inherit;
 
   @media (max-width: 768px) {
     margin: 0;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2px;
   }
 `;
 
@@ -97,43 +110,54 @@ interface AdminSidebarProps {
 }
 
 const AdminSidebar = ({ active }: AdminSidebarProps) => {
+  // Map of page names to their routes for easier maintenance
+  const pageRoutes = {
+    dashboard: '/admin/dashboard',
+    files: '/admin/script-files',
+    categories: '/admin/categories',
+    subscribers: '/admin/subscribers',
+    support: '/admin/support',
+    'payment-settings': '/admin/payment-settings',
+    stats: '/admin/stats',
+    settings: '/admin/settings'
+  };
   return (
     <Sidebar>
       <SidebarHeader>
-        <LogoIcon>🐺</LogoIcon>
+        <LogoIcon><Globe size={24} /></LogoIcon>
         <LogoText>Wolf Admin</LogoText>
       </SidebarHeader>
       <SidebarMenu>
-        <MenuItem to="/admin/dashboard" className={active === 'dashboard' ? 'active' : ''}>
-          <MenuIcon>📊</MenuIcon>
+        <MenuItem to={pageRoutes.dashboard} className={active === 'dashboard' ? 'active' : ''}>
+          <MenuIcon><Home /></MenuIcon>
           <MenuLabel>Dashboard</MenuLabel>
         </MenuItem>
-        <MenuItem to="/admin/files" className={active === 'files' ? 'active' : ''}>
-          <MenuIcon>📁</MenuIcon>
+        <MenuItem to="/admin/script-files" className={active === 'files' ? 'active' : ''}>
+          <MenuIcon><FileText /></MenuIcon>
           <MenuLabel>Files</MenuLabel>
         </MenuItem>
         <MenuItem to="/admin/categories" className={active === 'categories' ? 'active' : ''}>
-          <MenuIcon>🗂️</MenuIcon>
+          <MenuIcon><Folder /></MenuIcon>
           <MenuLabel>Categories</MenuLabel>
         </MenuItem>
         <MenuItem to="/admin/subscribers" className={active === 'subscribers' ? 'active' : ''}>
-          <MenuIcon>📧</MenuIcon>
+          <MenuIcon><Mail /></MenuIcon>
           <MenuLabel>Subscribers</MenuLabel>
         </MenuItem>
         <MenuItem to="/admin/support" className={active === 'support' ? 'active' : ''}>
-          <MenuIcon>💬</MenuIcon>
+          <MenuIcon><MessageSquare /></MenuIcon>
           <MenuLabel>Support Tickets</MenuLabel>
         </MenuItem>
         <MenuItem to="/admin/payment-settings" className={active === 'payment-settings' ? 'active' : ''}>
-          <MenuIcon>💰</MenuIcon>
+          <MenuIcon><DollarSign /></MenuIcon>
           <MenuLabel>Payment Settings</MenuLabel>
         </MenuItem>
         <MenuItem to="/admin/stats" className={active === 'stats' ? 'active' : ''}>
-          <MenuIcon>📈</MenuIcon>
+          <MenuIcon><BarChart2 /></MenuIcon>
           <MenuLabel>Statistics</MenuLabel>
         </MenuItem>
         <MenuItem to="/admin/settings" className={active === 'settings' ? 'active' : ''}>
-          <MenuIcon>⚙️</MenuIcon>
+          <MenuIcon><Settings /></MenuIcon>
           <MenuLabel>Settings</MenuLabel>
         </MenuItem>
       </SidebarMenu>

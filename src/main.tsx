@@ -14,6 +14,8 @@ import AdminLogin from './pages/admin/Login.tsx'
 import AdminSignup from './pages/admin/Signup.tsx'
 import PaymentSettings from './pages/admin/PaymentSettings.tsx'
 import AdminSupport from './pages/admin/support.tsx'
+import ScriptFiles from './pages/admin/script-files';
+import EditFile from './pages/admin/edit-file';
 
 import './index.css'
 import './theme/theme.css'
@@ -57,6 +59,25 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               element={
                 <ProtectedRoute>
                   <AdminSupport />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Script Files Pages */}
+            <Route 
+              path="/admin/script-files" 
+              element={
+                <ProtectedRoute>
+                  <ScriptFiles />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/admin/edit-file/:id" 
+              element={
+                <ProtectedRoute>
+                  <EditFile />
                 </ProtectedRoute>
               } 
             />

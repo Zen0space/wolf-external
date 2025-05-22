@@ -25,7 +25,7 @@ interface SupportReply extends DBSupportReply {
 interface SupportCategory {
   id: string;
   name: string;
-  description: string;
+  description?: string;
 }
 
 // Styled Components
