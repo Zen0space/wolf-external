@@ -12,49 +12,88 @@ export async function uploadFile(file: FileUpload): Promise<string> {
     
     // Define size threshold for Supabase storage (5MB)
     const SIZE_THRESHOLD = 5 * 1024 * 1024;
+    // Supabase has a 50MB limit for free tier, so we'll use 45MB as our safe threshold
+    const SUPABASE_SIZE_LIMIT = 45 * 1024 * 1024; // 45MB in bytes
     
-    // Determine if we should use Supabase storage based on file size
-    const useSupabaseStorage = file.size > SIZE_THRESHOLD;
+    // Use Supabase for medium-sized files, but not for very large ones
+    const useSupabaseStorage = file.size > SIZE_THRESHOLD && file.size < SUPABASE_SIZE_LIMIT;
     
     let contentBase64 = null;
     let storagePath = null;
     
     if (useSupabaseStorage) {
       // Upload to Supabase storage
-      storagePath = await uploadFileToStorage(
-        file.content, 
-        file.fileName, 
-        file.fileType
-      );
+      try {
+        storagePath = await uploadFileToStorage(
+          file.content, 
+          file.fileName, 
+          file.fileType
+        );
+      } catch (e: any) {
+        console.error('Error uploading to Supabase storage:', e);
+        
+        // Check if it's a size limit error (413 Payload Too Large)
+        if (e.statusCode === '413' || (e.message && e.message.includes('maximum allowed size'))) {
+          console.log('File too large for Supabase storage, falling back to database storage');
+          
+          // Fall back to database storage for large files
+          try {
+            if (file.content instanceof ArrayBuffer || file.content instanceof Uint8Array) {
+              contentBase64 = arrayBufferToBase64(file.content);
+            } else {
+              contentBase64 = file.content;
+            }
+            storagePath = null; // Clear storage path as it's now in the database
+          } catch (dbError: any) {
+            console.error('Error processing file content for database storage:', dbError);
+            throw new Error('File is too large for cloud storage and could not be processed for database storage. Please compress the file further or split it into smaller parts.');
+          }
+        } else {
+          throw new Error('Failed to upload file to storage: ' + (e.message || 'Unknown error'));
+        }
+      }
     } else {
-      // Use database storage for smaller files
-      if (file.content instanceof ArrayBuffer || file.content instanceof Uint8Array) {
-        contentBase64 = arrayBufferToBase64(file.content);
-      } else {
-        contentBase64 = file.content;
+      // Use database storage for smaller files or very large files (>45MB)
+      try {
+        if (file.content instanceof ArrayBuffer || file.content instanceof Uint8Array) {
+          contentBase64 = arrayBufferToBase64(file.content);
+        } else {
+          contentBase64 = file.content;
+        }
+      } catch (e: any) {
+        console.error('Error processing file content:', e);
+        throw new Error('Failed to process file content: ' + (e.message || 'Unknown error'));
       }
     }
     
     // Insert file metadata into database
-    await client.execute({
-      sql: `
-        INSERT INTO files (
-          id, file_name, file_type, description, category, size, content, storage_path, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      args: [
-        fileId,
-        file.fileName,
-        file.fileType,
-        file.description || null,
-        file.category,
-        file.size,
-        contentBase64, // Will be null if using Supabase storage
-        storagePath,  // Will be null if using database storage
-        localTime,
-        localTime
-      ]
-    });
+    try {
+      await client.execute({
+        sql: `
+          INSERT INTO files (
+            id, file_name, file_type, description, category, size, content, storage_path, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        args: [
+          fileId,
+          file.fileName,
+          file.fileType,
+          file.description || null,
+          file.category,
+          file.size,
+          contentBase64, // Will be null if using Supabase storage
+          storagePath,  // Will be null if using database storage
+          localTime,
+          localTime
+        ]
+      });
+    } catch (dbError: any) {
+      console.error('Database error inserting file:', dbError);
+      if (dbError.message && dbError.message.includes('out of memory')) {
+        throw new Error('File is too large to store in the database. Please use a smaller file or compress it further.');
+      }
+      throw dbError;
+    }
     
     return fileId;
   } catch (error) {
