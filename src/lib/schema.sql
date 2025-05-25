@@ -5,11 +5,11 @@ CREATE TABLE IF NOT EXISTS files (
   id TEXT PRIMARY KEY,
   file_name TEXT NOT NULL,
   file_type TEXT NOT NULL,
-  storage_path TEXT NOT NULL,
+  storage_path TEXT,
   description TEXT,
   category TEXT NOT NULL,
   size INTEGER NOT NULL,
-  content BLOB NOT NULL,
+  content BLOB,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

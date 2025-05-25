@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App.tsx'
 import Scripts from './pages/scripts/Scripts.tsx'
 import Support from './pages/support/support.tsx'
+import Website from './pages/website/website.tsx'
 import { ThemeProvider } from './theme/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             } />
             <Route path="/scripts" element={<Scripts />} />
             <Route path="/support" element={<Support />} />
+            <Route path="/website" element={<Website />} />
             
             {/* Admin authentication routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

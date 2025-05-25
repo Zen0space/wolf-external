@@ -10,13 +10,14 @@ export async function uploadFile(file: FileUpload): Promise<string> {
     const fileId = uuidv4();
     const localTime = getMalaysiaTimeISO();
     
-    // Define size threshold for Supabase storage (5MB)
-    const SIZE_THRESHOLD = 5 * 1024 * 1024;
-    // Supabase has a 50MB limit for free tier, so we'll use 45MB as our safe threshold
-    const SUPABASE_SIZE_LIMIT = 45 * 1024 * 1024; // 45MB in bytes
+    // TEMPORARILY DISABLE SUPABASE - Store all files in database to avoid 413 errors
+    console.log(`File size: ${file.size} bytes (${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
+    console.log(`Storing all files in Turso database (Supabase disabled)`);
     
-    // Use Supabase for medium-sized files, but not for very large ones
-    const useSupabaseStorage = file.size > SIZE_THRESHOLD && file.size < SUPABASE_SIZE_LIMIT;
+    // Force all files to use database storage
+    const useSupabaseStorage = false;
+    
+    console.log(`Will use Supabase storage: ${useSupabaseStorage}`);
     
     let contentBase64 = null;
     let storagePath = null;
@@ -82,7 +83,7 @@ export async function uploadFile(file: FileUpload): Promise<string> {
           file.category,
           file.size,
           contentBase64, // Will be null if using Supabase storage
-          storagePath,  // Will be null if using database storage
+          storagePath || '', // Provide empty string if null to handle NOT NULL constraint
           localTime,
           localTime
         ]
@@ -184,7 +185,7 @@ export async function getFile(id: string) {
     };
     
     // Handle content based on where it's stored
-    if (storagePath) {
+    if (storagePath && storagePath !== '') {
       try {
         // File is stored in Supabase storage
         // Get the public URL for the file
@@ -321,53 +322,28 @@ export async function updateFile(id: string, fileData: Partial<FileUpload>): Pro
     
     const existingFile = fileResult.rows[0];
     
-    // Define size threshold for Supabase storage (5MB)
-    const SIZE_THRESHOLD = 5 * 1024 * 1024;
+    // TEMPORARILY DISABLE SUPABASE - Store all files in database to avoid 413 errors
+    console.log(`File size: ${fileData.size || 0} bytes (${((fileData.size || 0) / (1024 * 1024)).toFixed(2)} MB)`);
+    console.log(`Storing all files in Turso database (Supabase disabled)`);
     
-    // Prepare update data, using existing values for any missing fields
-    const updateData = {
-      fileName: fileData.fileName || existingFile.file_name,
-      fileType: fileData.fileType || existingFile.file_type,
-      description: fileData.description !== undefined ? fileData.description : existingFile.description,
-      category: fileData.category || existingFile.category,
-      size: fileData.size || existingFile.size,
-      content: null as string | null,
-      storagePath: existingFile.storage_path as string | null,
-      updatedAt: getMalaysiaTimeISO()
-    };
+    // Force all files to use database storage
+    const useSupabaseStorage = false;
+    
+    console.log(`Will use Supabase storage: ${useSupabaseStorage}`);
+    
+    let contentBase64 = null;
+    let storagePath = null;
     
     // If a new file was uploaded, handle it appropriately
     if (fileData.content) {
-      // Determine if we should use Supabase storage based on file size
-      const fileSize = fileData.size || 0;
-      // Supabase has a 50MB limit for free tier, so we'll use 45MB as our safe threshold
-      const SUPABASE_SIZE_LIMIT = 45 * 1024 * 1024; // 45MB in bytes
-      // Use Supabase for medium-sized files, but not for very large ones
-      const useSupabaseStorage = fileSize > SIZE_THRESHOLD && fileSize < SUPABASE_SIZE_LIMIT;
-      
-      // If the file was previously in Supabase storage, delete it
-      if (existingFile.storage_path) {
-        try {
-          await deleteFileFromStorage(String(existingFile.storage_path));
-        } catch (e) {
-          console.warn('Could not delete previous file from storage:', e);
-          // Continue with the update even if delete fails
-        }
-      }
-      
       if (useSupabaseStorage) {
         // Upload to Supabase storage
         try {
-          // Ensure all parameters are of the correct type
-          const fileName = String(updateData.fileName || 'unnamed_file');
-          const fileType = String(updateData.fileType || 'application/octet-stream');
-          
-          updateData.storagePath = await uploadFileToStorage(
-            fileData.content,
-            fileName,
-            fileType
+          storagePath = await uploadFileToStorage(
+            fileData.content, 
+            String(fileData.fileName || existingFile.file_name), 
+            String(fileData.fileType || existingFile.file_type)
           );
-          updateData.content = null as string | null; // Clear content as it's now in storage
         } catch (e: any) {
           console.error('Error uploading to Supabase storage:', e);
           
@@ -377,8 +353,8 @@ export async function updateFile(id: string, fileData: Partial<FileUpload>): Pro
             
             // Fall back to database storage for large files
             try {
-              updateData.content = arrayBufferToBase64(fileData.content);
-              updateData.storagePath = null; // Clear storage path as it's now in the database
+              contentBase64 = arrayBufferToBase64(fileData.content);
+              storagePath = null; // Clear storage path as it's now in the database
             } catch (dbError: any) {
               console.error('Error processing file content for database storage:', dbError);
               throw new Error('File is too large for cloud storage and could not be processed for database storage. Please compress the file further or split it into smaller parts.');
@@ -390,8 +366,8 @@ export async function updateFile(id: string, fileData: Partial<FileUpload>): Pro
       } else {
         // Use database storage for smaller files
         try {
-          updateData.content = arrayBufferToBase64(fileData.content);
-          updateData.storagePath = null; // Clear storage path as it's now in the database
+          contentBase64 = arrayBufferToBase64(fileData.content);
+          storagePath = null; // Clear storage path as it's now in the database
         } catch (e: any) {
           console.error('Error processing file content:', e);
           throw new Error('Failed to process file content: ' + (e.message || 'Unknown error'));
@@ -418,14 +394,14 @@ export async function updateFile(id: string, fileData: Partial<FileUpload>): Pro
         WHERE id = ?
       `;
       args = [
-        updateData.fileName, 
-        updateData.fileType, 
-        updateData.description, 
-        updateData.category, 
-        updateData.size, 
-        updateData.content, 
-        updateData.storagePath,
-        updateData.updatedAt, 
+        fileData.fileName || existingFile.file_name, 
+        fileData.fileType || existingFile.file_type, 
+        fileData.description !== undefined ? fileData.description : existingFile.description, 
+        fileData.category || existingFile.category, 
+        fileData.size || existingFile.size, 
+        contentBase64, 
+        storagePath,
+        getMalaysiaTimeISO(), 
         id
       ];
     } else {
@@ -440,11 +416,11 @@ export async function updateFile(id: string, fileData: Partial<FileUpload>): Pro
         WHERE id = ?
       `;
       args = [
-        updateData.fileName, 
-        updateData.fileType, 
-        updateData.description, 
-        updateData.category, 
-        updateData.updatedAt, 
+        fileData.fileName || existingFile.file_name, 
+        fileData.fileType || existingFile.file_type, 
+        fileData.description !== undefined ? fileData.description : existingFile.description, 
+        fileData.category || existingFile.category, 
+        getMalaysiaTimeISO(), 
         id
       ];
     }

@@ -267,27 +267,21 @@ const Navbar: FC<NavbarProps> = ({ onDownloadClick }) => {
             ...(hoveredLink === 'support' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
         </Link>
-        <span
+        <Link 
+          to="/website" 
           style={{
             ...StyledNavbar.navLink,
-            cursor: 'not-allowed',
-            opacity: 0.7,
-            position: 'relative',
-            display: 'inline-flex',
-            alignItems: 'center',
+            ...(hoveredLink === 'website' ? StyledNavbar.navLinkHover : {})
           }}
           onMouseEnter={() => setHoveredLink('website')}
           onMouseLeave={() => setHoveredLink(null)}
-          tabIndex={-1}
-          aria-disabled="true"
         >
           Website
-          <span style={comingSoonBadge}>Coming Soon</span>
           <div style={{
             ...StyledNavbar.navLinkUnderline,
             ...(hoveredLink === 'website' ? StyledNavbar.navLinkUnderlineActive : {})
           }} />
-        </span>
+        </Link>
       </div>
       <div style={StyledNavbar.navActions}>
         <button 
