@@ -34,7 +34,7 @@ const WelcomeSection: FC = () => {
         <p className="subtitle">Streamline your system with automated solutions</p>
         <div className="cta-buttons">
           <button className="btn-primary" onClick={handleDownloadClick}>DOWNLOAD SCRIPTS</button>
-          <button className="btn-secondary">View Documentation</button>
+          <a href="https://discord.gg/Rx5Wjhx7" target="_blank" rel="noopener noreferrer" className="btn-secondary">Discord Community</a>
         </div>
       </div>
     </section>
