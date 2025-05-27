@@ -110,26 +110,34 @@ export function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
     buffer = buffer.buffer;
   }
   
-  // Process the buffer in chunks to avoid memory issues with large files
   const binary = new Uint8Array(buffer);
-  const chunkSize = 1024 * 1024; // 1MB chunks
-  let result = '';
+  const length = binary.length;
   
-  // Process the binary data in chunks
-  for (let i = 0; i < binary.length; i += chunkSize) {
-    const chunk = binary.slice(i, Math.min(i + chunkSize, binary.length));
+  // For small files (< 10MB), process at once
+  if (length < 10 * 1024 * 1024) {
     let binaryString = '';
+    for (let i = 0; i < length; i++) {
+      binaryString += String.fromCharCode(binary[i]);
+    }
+    return btoa(binaryString);
+  }
+  
+  // For larger files, process in chunks to avoid memory issues
+  const chunkSize = 1024 * 1024; // 1MB chunks
+  let binaryString = '';
+  
+  // Process the binary data in chunks, but combine before encoding
+  for (let i = 0; i < length; i += chunkSize) {
+    const chunk = binary.slice(i, Math.min(i + chunkSize, length));
     
     // Convert each byte to a character
     for (let j = 0; j < chunk.length; j++) {
       binaryString += String.fromCharCode(chunk[j]);
     }
-    
-    // Encode the chunk and append to result
-    result += btoa(binaryString);
   }
   
-  return result;
+  // Encode the entire binary string at once
+  return btoa(binaryString);
 }
 
 // Helper function to convert Base64 to ArrayBuffer with maximum robustness for large files
