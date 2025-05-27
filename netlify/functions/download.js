@@ -79,32 +79,27 @@ exports.handler = async (event, context) => {
       console.log(`Processing file: ${fileName}, size: ${fileSize} bytes`);
       
       try {
-        // Convert base64 to binary for sending back to client
-        // When using Netlify functions, we need to be careful with how base64 content is handled
-        // Ensure the content length is properly set to match the actual file size
+        // In production, we need a different approach than in local development
+        // The key difference is how we handle the base64 content and binary data
         
-        // Convert the content to a buffer for proper handling
-        const fileBuffer = Buffer.from(file.content, 'base64');
+        console.log(`Processing file in production mode, size: ${fileSize} bytes`);
         
-        // Log actual content length for debugging
-        console.log(`Original file size: ${fileSize} bytes, Buffer length: ${fileBuffer.length} bytes`);
-        
-        // Ensure the file size matches what we expect
-        if (Math.abs(fileBuffer.length - fileSize) > 100) {
-          console.warn(`File size mismatch: expected ${fileSize} bytes, got ${fileBuffer.length} bytes`);
-        }
+        // For production, we need to be extra careful with how we handle the response
+        // The safest approach is to simply pass through the base64 content as-is
+        // and let Netlify handle the decoding, which works better in production
         
         return {
           statusCode: 200,
           headers: {
             'Content-Type': fileType,
             'Content-Disposition': `attachment; filename="${fileName}"`,
-            'Content-Length': fileSize.toString(),
+            // Don't set Content-Length as it can cause issues in production with base64
             'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0'
           },
-          body: fileBuffer.toString('base64'),
+          // Pass the base64 string directly without double-encoding it
+          body: file.content,
           isBase64Encoded: true
         };
       } catch (error) {
