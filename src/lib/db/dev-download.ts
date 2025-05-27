@@ -112,35 +112,17 @@ export function downloadInBrowser(fileData: {
   }
 }
 
-// Check if we're in development mode using Vite
-export function isDevelopment(): boolean {
-  return import.meta.env.DEV === true;
-}
-
-// Handle file download in the appropriate way based on environment
+// Handle file download directly from the database for all environments
 export async function handleFileDownload(fileId: string): Promise<void> {
-  if (isDevelopment()) {
-    console.log('[DEV] Using direct database download for development');
-    try {
-      // Fetch and download directly in dev mode
-      const fileData = await fetchFileData(fileId);
-      if (fileData) {
-        downloadInBrowser(fileData);
-      }
-    } catch (error) {
-      console.error('[DEV] Direct download failed:', error);
-      alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  console.log('[Client] Using direct database download');
+  try {
+    // Fetch and download directly
+    const fileData = await fetchFileData(fileId);
+    if (fileData) {
+      downloadInBrowser(fileData);
     }
-  } else {
-    // In production, we use the Netlify function endpoint
-    console.log('[PROD] Using Netlify function for download');
-    const downloadUrl = `/api/download-binary/${fileId}`;
-    
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  } catch (error) {
+    console.error('[Client] Direct download failed:', error);
+    alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

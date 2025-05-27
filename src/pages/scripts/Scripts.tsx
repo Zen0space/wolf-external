@@ -467,30 +467,10 @@ const Scripts: FC = () => {
       const fileInfo = await getFileInfo(selectedFileId);
       
       if (fileInfo) {
-        // Determine if we're in development or production
-        const isDev = import.meta.env.DEV === true;
-        console.log(`Environment: ${isDev ? 'Development' : 'Production'}`);
-        
-        if (isDev) {
-          // In development, use the client-side download handler
-          const { handleFileDownload } = await import('../../lib/db/dev-download');
-          await handleFileDownload(selectedFileId);
-          console.log(`[DEV] Download initiated for file ID: ${selectedFileId}`);
-        } else {
-          // In production, use the Netlify function endpoint directly
-          console.log(`[PROD] Using Netlify function for download`);
-          const downloadUrl = `/api/download-binary/${selectedFileId}`;
-          
-          // Create and trigger download link
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.target = '_blank';
-          link.download = fileInfo.fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          console.log(`[PROD] Download initiated via: ${downloadUrl}`);
-        }
+        // Always use the client-side download handler for all environments
+        const { handleFileDownload } = await import('../../lib/db/dev-download');
+        await handleFileDownload(selectedFileId);
+        console.log(`Download initiated for file ID: ${selectedFileId}`);
         
         // Close the modal and reset state
         setShowEmailModal(false);
