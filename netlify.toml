@@ -3,7 +3,12 @@
   publish = "dist"
   functions = "netlify/functions"
 
-# Redirect API requests to the serverless function
+# Redirect API requests to the serverless functions
+[[redirects]]
+  from = "/api/download-binary/*"
+  to = "/.netlify/functions/download-binary/:splat"
+  status = 200
+
 [[redirects]]
   from = "/api/download/*"
   to = "/.netlify/functions/download/:splat"

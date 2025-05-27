@@ -467,8 +467,9 @@ const Scripts: FC = () => {
       const fileInfo = await getFileInfo(selectedFileId);
       
       if (fileInfo) {
-        // Use the Netlify function endpoint for downloads
-        const downloadUrl = `/api/download/${selectedFileId}`;
+        // Use the Netlify function endpoint for downloads - use the binary version for production
+        const downloadUrl = `/api/download-binary/${selectedFileId}`; // New endpoint for better production compatibility
+        console.log(`Downloading file using: ${downloadUrl}`);
         
         // Create and trigger download link
         const link = document.createElement('a');
