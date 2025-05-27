@@ -81,6 +81,8 @@ exports.handler = async (event, context) => {
         // Convert base64 to binary on the server side
         const fileBuffer = Buffer.from(file.content, 'base64');
         
+        console.log(`File buffer created with length: ${fileBuffer.length} bytes`);
+        
         // Return the file as binary data
         return {
           statusCode: 200,
@@ -89,7 +91,8 @@ exports.handler = async (event, context) => {
             'Content-Disposition': `attachment; filename="${fileName}"`,
             'Content-Length': fileBuffer.length
           },
-          body: fileBuffer.toString('base64'),
+          // Directly use the buffer content without additional conversion
+          body: file.content,
           isBase64Encoded: true
         };
       } catch (error) {
