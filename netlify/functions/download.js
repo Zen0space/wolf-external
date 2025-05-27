@@ -38,6 +38,7 @@ exports.handler = async (event, context) => {
     const fileName = file.file_name;
     const fileType = file.file_type || 'application/octet-stream';
     const storagePath = file.storage_path;
+    const fileSize = file.size;
     
     // Track download
     const localTime = new Date().toISOString();
@@ -47,7 +48,7 @@ exports.handler = async (event, context) => {
     });
     
     // Handle file retrieval based on storage location
-    if (storagePath) {
+    if (storagePath && storagePath.trim() !== '') {
       // For files in Supabase storage, redirect to the storage URL
       const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
       
@@ -75,24 +76,35 @@ exports.handler = async (event, context) => {
         };
       }
       
-      console.log(`Processing file: ${fileName}, size: ${file.size} bytes`);
+      console.log(`Processing file: ${fileName}, size: ${fileSize} bytes`);
       
       try {
-        // Convert base64 to binary on the server side
+        // Convert base64 to binary for sending back to client
+        // When using Netlify functions, we need to be careful with how base64 content is handled
+        // Ensure the content length is properly set to match the actual file size
+        
+        // Convert the content to a buffer for proper handling
         const fileBuffer = Buffer.from(file.content, 'base64');
         
-        console.log(`File buffer created with length: ${fileBuffer.length} bytes`);
+        // Log actual content length for debugging
+        console.log(`Original file size: ${fileSize} bytes, Buffer length: ${fileBuffer.length} bytes`);
         
-        // Return the file as binary data
+        // Ensure the file size matches what we expect
+        if (Math.abs(fileBuffer.length - fileSize) > 100) {
+          console.warn(`File size mismatch: expected ${fileSize} bytes, got ${fileBuffer.length} bytes`);
+        }
+        
         return {
           statusCode: 200,
           headers: {
             'Content-Type': fileType,
             'Content-Disposition': `attachment; filename="${fileName}"`,
-            'Content-Length': fileBuffer.length
+            'Content-Length': fileSize.toString(),
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           },
-          // Directly use the buffer content without additional conversion
-          body: file.content,
+          body: fileBuffer.toString('base64'),
           isBase64Encoded: true
         };
       } catch (error) {
