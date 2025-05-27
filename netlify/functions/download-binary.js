@@ -82,6 +82,8 @@ exports.handler = async (event, context) => {
         // 3. We set minimal headers to avoid issues
         
         console.log(`[PROD] Serving file: ${fileName} directly from database`);
+        console.log(`[PROD] file.content length: ${file.content ? file.content.length : 'null or undefined'}`);
+        console.log(`[PROD] file.content snippet (first 100 chars): ${file.content ? file.content.substring(0, 100) : 'null or undefined'}`);
         
         return {
           statusCode: 200,

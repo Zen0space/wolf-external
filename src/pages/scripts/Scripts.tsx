@@ -467,22 +467,12 @@ const Scripts: FC = () => {
       const fileInfo = await getFileInfo(selectedFileId);
       
       if (fileInfo) {
-        // Use the Netlify function endpoint for downloads - use the binary version for production
-        const downloadUrl = `/api/download-binary/${selectedFileId}`; // New endpoint for better production compatibility
-        console.log(`Downloading file using: ${downloadUrl}`);
+        // Import the development download handler
+        const { handleFileDownload } = await import('../../lib/db/dev-download');
         
-        // Create and trigger download link
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.target = '_blank'; // Open in new tab to avoid navigation issues
-        link.download = fileInfo.fileName;
-        document.body.appendChild(link);
-        
-        // Trigger download
-        link.click();
-        
-        // Clean up
-        document.body.removeChild(link);
+        // Handle the download based on environment
+        await handleFileDownload(selectedFileId);
+        console.log(`Download initiated for file ID: ${selectedFileId}`);
         
         // Close the modal and reset state
         setShowEmailModal(false);

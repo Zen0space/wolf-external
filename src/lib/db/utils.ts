@@ -142,12 +142,18 @@ export function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
 
 // Helper function to convert Base64 to ArrayBuffer with maximum robustness for large files
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  // Check if the base64 string is already padded correctly
+  // Add padding if necessary to ensure valid base64
+  const paddedBase64 = base64.replace(/=/g, '').padEnd(
+    Math.ceil(base64.replace(/=/g, '').length / 4) * 4,
+    '='
+  );
   try {
     // For extremely large base64 strings, we need a completely different approach
     // that minimizes memory usage and handles browser limitations
     
     // First, measure the string to get an idea of how large this file is
-    const base64Length = base64.length;
+    const base64Length = paddedBase64.length;
     console.log(`Processing base64 string of length: ${base64Length}`);
     
     // For very large strings (>50MB of base64 data), use an alternative approach
@@ -281,11 +287,16 @@ function processMediumBase64String(base64: string): ArrayBuffer {
 
 // Process standard-sized base64 strings (<10MB)
 function processStandardBase64String(base64: string): ArrayBuffer {
+  // Ensure proper base64 padding
+  const paddedBase64 = base64.replace(/=/g, '').padEnd(
+    Math.ceil(base64.replace(/=/g, '').length / 4) * 4,
+    '='
+  );
   console.log('Using standard file processing method');
   
   try {
     // For smaller strings, we can use a more direct approach
-    const binaryString = atob(base64);
+    const binaryString = atob(paddedBase64);
     const bytes = new Uint8Array(binaryString.length);
     
     for (let i = 0; i < binaryString.length; i++) {
